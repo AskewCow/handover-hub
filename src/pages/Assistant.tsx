@@ -21,7 +21,7 @@ const sourceTone: Record<string, Tone> = {
   Tasks: 'amber',
   'Decision log': 'purple',
   'Buddy & check-in': 'green',
-  'Outgoing handover': 'blue',
+  'Handover notes': 'blue',
 };
 
 export function Assistant() {

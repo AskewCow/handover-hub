@@ -7,11 +7,11 @@ import { isSectionFilled } from '@/lib/metrics';
 import { useRole } from '@/workspace/WorkspaceProvider';
 
 /**
- * The outgoing handover belongs to the role: the person leaving writes it and the next person reads it.
- * Incoming members are told it was written by the previous holder, so a full bar isn't mistaken for their own progress.
+ * Handover notes belong to the role: each lead reads them when they start and keeps them current.
+ * New members are told who wrote them and that they can (and should) edit anything outdated.
  */
 export function Handover() {
-  const { bundle, run, profile } = useRole();
+  const { bundle, run, profile, members } = useRole();
   const isIncoming = profile.member_type === 'incoming';
   const sections = HANDOVER_SECTIONS;
   const filled = sections.map(s => isSectionFilled(bundle, s.key));
@@ -36,7 +36,7 @@ export function Handover() {
   async function saveThenGo(next: number) {
     if (dirty) {
       setSaving(true);
-      const ok = await run(() => saveHandoverSection(bundle.role.id, current.key, { title: title.trim(), body: body.trim() }), 'Draft saved');
+      const ok = await run(() => saveHandoverSection(bundle.role.id, current.key, { title: title.trim(), body: body.trim() }), 'Changes saved');
       setSaving(false);
       if (!ok) return;
     }
@@ -44,40 +44,42 @@ export function Handover() {
   }
 
   const isLast = step === sections.length - 1;
+  const editedBy = (id: string | null) => members.find(m => m.id === id)?.full_name ?? 'the previous lead';
   const statusPill = saving ? (
     <Pill tone="neutral">Saving…</Pill>
-  ) : filledCount === sections.length ? (
-    <Pill tone="green">{isIncoming ? 'Completed by the previous lead' : 'Handover complete'}</Pill>
   ) : lastSaved ? (
-    <Pill tone="amber">Draft saved {relativeDays(lastSaved)}</Pill>
+    <Pill tone={filledCount === sections.length ? 'green' : 'amber'}>
+      {filledCount === sections.length ? `All ${sections.length} sections written` : `${filledCount} of ${sections.length} sections written`} · last edited {relativeDays(lastSaved)}
+    </Pill>
   ) : (
     <Pill tone="neutral">Not started</Pill>
   );
+  const primaryLabel = dirty ? (isLast ? 'Save changes' : 'Save changes & continue →') : isLast ? 'Up to date' : 'Next →';
 
   return (
     <>
       <PageTitle
-        eyebrow="Outgoing committee"
-        title="Build your handover"
-        description={`Turn what you know into a clear, useful starting point for the next ${bundle.role.title}.`}
+        eyebrow="Knowledge carried forward"
+        title="Handover notes"
+        description={`The current handover for the ${bundle.role.title}. If something is missing or has changed, edit it so the next person starts from the truth.`}
         action={statusPill}
       />
       {isIncoming && (
         <div className="mb-5 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm leading-6 text-sky-800">
-          <b>This isn’t your progress.</b> The previous {bundle.role.title} filled in this handover when they left
-          {filledCount === sections.length ? ', so every section is green' : ''}. Read it to get started. You’ll write your own here when you hand the role over.
+          <b>Written by the previous lead.</b> This is how the role works today. Spotted something outdated or missing? Edit it here: you’re now
+          responsible for keeping it current.
         </div>
       )}
       <Card className="mb-5 p-5">
         <div className="mb-3 flex justify-between text-sm">
-          <b>{filledCount} of {sections.length} sections {isIncoming ? 'written by the previous lead' : 'complete'}</b>
+          <b>{filledCount} of {sections.length} sections written</b>
           <span className="font-bold text-emerald-700">{Math.round((filledCount / sections.length) * 100)}%</span>
         </div>
         <Progress value={(filledCount / sections.length) * 100} />
         <div className="mt-4 hidden justify-between md:flex">
           {sections.map((s, i) => (
             <button onClick={() => saveThenGo(i)} key={s.key} className={`text-xs font-semibold ${i === step ? 'text-emerald-700' : filled[i] ? 'text-slate-600' : 'text-slate-300'}`}>
-              {s.label}
+              {i + 1}. {s.label}
             </button>
           ))}
         </div>
@@ -94,7 +96,7 @@ export function Handover() {
               <span className={`grid h-6 w-6 place-items-center rounded-full text-xs ${filled[i] ? 'bg-emerald-500 text-white' : i === step ? 'bg-emerald-200 text-emerald-800' : 'bg-slate-100 text-slate-400'}`}>
                 {filled[i] ? '✓' : i + 1}
               </span>
-              {s.label}
+              <span><span className="mr-1 text-slate-400">{i + 1}.</span>{s.label}</span>
             </button>
           ))}
         </Card>
@@ -106,12 +108,12 @@ export function Handover() {
             <Input label={`${current.label} title`} value={title} onChange={setTitle} placeholder={current.titlePlaceholder} />
             <Textarea label="Useful context" value={body} onChange={setBody} placeholder={current.bodyPlaceholder} />
           </div>
-          {saved && !dirty && <p className="mt-3 text-xs text-slate-400">Saved {relativeDays(saved.updated_at)}</p>}
+          {saved && !dirty && <p className="mt-3 text-xs text-slate-400">Last edited {relativeDays(saved.updated_at)} by {editedBy(saved.updated_by)}</p>}
           {dirty && <p className="mt-3 text-xs text-amber-600">Unsaved changes</p>}
           <div className="mt-6 grid grid-cols-2 gap-3 sm:flex sm:justify-between">
             <Button secondary onClick={() => saveThenGo(step - 1)} disabled={saving || step === 0}>← Back</Button>
-            <Button onClick={() => saveThenGo(isLast ? step : step + 1)} disabled={saving}>
-              {isLast ? 'Save handover' : 'Save & continue →'}
+            <Button onClick={() => saveThenGo(isLast ? step : step + 1)} disabled={saving || (isLast && !dirty)}>
+              {saving ? 'Saving…' : primaryLabel}
             </Button>
           </div>
         </Card>

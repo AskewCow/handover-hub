@@ -10,7 +10,7 @@ const MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-5-5';
 const DAILY_LIMIT = 40; // questions per member per 24 hours, to keep API costs predictable
 const MAX_QUESTION_LENGTH = 500;
 
-const SECTIONS = ['Role guide', 'Onboarding', 'Contacts', 'Tasks', 'Decision log', 'Buddy & check-in', 'Outgoing handover'] as const;
+const SECTIONS = ['Role guide', 'Onboarding', 'Contacts', 'Tasks', 'Decision log', 'Buddy & check-in', 'Handover notes'] as const;
 
 const AnswerSchema = z.object({
   answer: z.string(),
@@ -89,7 +89,7 @@ async function buildContext(db: SupabaseClient, roleId: string, userId: string):
       .map(d => `- ${d.decided_on}: ${d.title}. Reason: ${d.reason}${d.tried_before ? ` Tried before: ${d.tried_before}` : ''} (by ${d.author})`)
       .join('\n') || '(none)'}`,
     `[Buddy & check-in · Buddy]\n${role.buddy_name ? `${role.buddy_name}, ${role.buddy_title}. ${role.buddy_note}` : '(no buddy named)'}\nYour week-1 check-in: ${checkin ? `${checkin.status}${checkin.scheduled_at ? ` at ${checkin.scheduled_at}` : ''}` : 'not booked'}`,
-    `[Outgoing handover · Notes from the previous holder]\n${handover.map(h => `- ${HANDOVER_LABELS[String(h.section)] ?? h.section}: ${h.title}. ${h.body}`).join('\n') || '(none)'}`,
+    `[Handover notes · From previous leads]\n${handover.map(h => `- ${HANDOVER_LABELS[String(h.section)] ?? h.section}: ${h.title}. ${h.body}`).join('\n') || '(none)'}`,
   ];
   return parts.join('\n\n');
 }

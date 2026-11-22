@@ -14,7 +14,7 @@ For each committee role it brings together:
 | **Decision log** | What was decided, why, and what was tried before. Searchable. |
 | **Buddy & check-in** | Named buddy (a member account), week-1 check-in booking and outcome, private notes (visible only to you). Booking or moving the check-in messages the buddy. |
 | **Messages** | Private in-app messages between members, with an unread badge in the sidebar. "Send a message" on the buddy card opens the conversation. |
-| **Outgoing handover** | Guided five-step form for the leaver, saved as drafts. |
+| **Handover notes** | The role's handover in five numbered sections, written by the previous lead and kept current by whoever holds the role. Shows who last edited each section. |
 | **Ask assistant** | Answers questions using only the role's own content, with sources. Runs on the server so the API key stays private. |
 | **Lead view** | Society leads only: completeness, stale items and check-in status for every role, CSV export, and recent assistant questions. |
 

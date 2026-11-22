@@ -28,7 +28,7 @@ const pages: Record<View, ComponentType> = {
   'Decision log': DecisionLog,
   'Buddy & check-in': Buddy,
   Messages,
-  'Outgoing handover': Handover,
+  'Handover notes': Handover,
   'Ask assistant': Assistant,
   'Lead view': LeadView,
 };

@@ -9,14 +9,14 @@ export type View =
   | 'Decision log'
   | 'Buddy & check-in'
   | 'Messages'
-  | 'Outgoing handover'
+  | 'Handover notes'
   | 'Ask assistant'
   | 'Lead view';
 
 export const navGroups: { label: string; items: View[] }[] = [
   { label: 'Workspace', items: ['Dashboard', 'Role guide', 'Onboarding', 'Contacts', 'Tasks', 'Decision log'] },
   { label: 'Support', items: ['Buddy & check-in', 'Messages', 'Ask assistant'] },
-  { label: 'Manage', items: ['Outgoing handover', 'Lead view'] },
+  { label: 'Manage', items: ['Handover notes', 'Lead view'] },
 ];
 
 const slugs: Record<View, string> = {
@@ -28,7 +28,7 @@ const slugs: Record<View, string> = {
   'Decision log': 'decisions',
   'Buddy & check-in': 'buddy',
   Messages: 'messages',
-  'Outgoing handover': 'handover',
+  'Handover notes': 'handover',
   'Ask assistant': 'ask',
   'Lead view': 'lead',
 };
