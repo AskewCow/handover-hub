@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Button, Card, Empty, Input, PageTitle, Pill, Progress, Textarea } from '@/components/ui';
+import { Button, Card, Input, PageTitle, Pill, Progress, Textarea } from '@/components/ui';
 import { saveHandoverSection } from '@/lib/api';
 import { relativeDays } from '@/lib/dates';
 import { HANDOVER_SECTIONS } from '@/lib/handoverSections';
@@ -7,61 +7,12 @@ import { isSectionFilled } from '@/lib/metrics';
 import { useRole } from '@/workspace/WorkspaceProvider';
 
 /**
- * The outgoing handover belongs to the role: the person leaving writes it, the person arriving reads it.
- * Incoming members see the notes read-only; outgoing members and leads get the guided form.
+ * The outgoing handover belongs to the role: the person leaving writes it and the next person reads it.
+ * Incoming members are told it was written by the previous holder, so a full bar isn't mistaken for their own progress.
  */
 export function Handover() {
-  const { profile } = useRole();
-  return profile.member_type === 'incoming' ? <HandoverNotes /> : <HandoverForm />;
-}
-
-function HandoverNotes() {
-  const { bundle } = useRole();
-  const written = HANDOVER_SECTIONS.filter(s => isSectionFilled(bundle, s.key)).length;
-  const lastSaved = bundle.handover.reduce<string | null>((latest, s) => (!latest || s.updated_at > latest ? s.updated_at : latest), null);
-
-  return (
-    <>
-      <PageTitle
-        eyebrow={`From the previous ${bundle.role.title}`}
-        title="Handover notes"
-        description="What the person who held this role before you wanted you to know. Ask your buddy if anything here is unclear or out of date."
-        action={lastSaved ? <Pill tone="neutral">Written {relativeDays(lastSaved)}</Pill> : undefined}
-      />
-      {written === 0 ? (
-        <Card><Empty title="No handover notes yet" text="The previous holder of this role hasn’t written their handover. Ask your buddy for the essentials." /></Card>
-      ) : (
-        <div className="space-y-4">
-          {HANDOVER_SECTIONS.map((section, i) => {
-            const note = bundle.handover.find(h => h.section === section.key);
-            const filled = isSectionFilled(bundle, section.key);
-            return (
-              <Card key={section.key} className="p-5 sm:p-6">
-                <div className="flex gap-4">
-                  <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">{i + 1}</span>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">{section.label}</p>
-                    {filled ? (
-                      <>
-                        <h2 className="mt-1 font-semibold text-slate-900">{note!.title}</h2>
-                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">{note!.body}</p>
-                      </>
-                    ) : (
-                      <p className="mt-1 text-sm text-slate-400">Not written yet.</p>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-    </>
-  );
-}
-
-function HandoverForm() {
-  const { bundle, run } = useRole();
+  const { bundle, run, profile } = useRole();
+  const isIncoming = profile.member_type === 'incoming';
   const sections = HANDOVER_SECTIONS;
   const filled = sections.map(s => isSectionFilled(bundle, s.key));
   const filledCount = filled.filter(Boolean).length;
@@ -96,7 +47,7 @@ function HandoverForm() {
   const statusPill = saving ? (
     <Pill tone="neutral">Saving…</Pill>
   ) : filledCount === sections.length ? (
-    <Pill tone="green">Handover complete</Pill>
+    <Pill tone="green">{isIncoming ? 'Completed by the previous lead' : 'Handover complete'}</Pill>
   ) : lastSaved ? (
     <Pill tone="amber">Draft saved {relativeDays(lastSaved)}</Pill>
   ) : (
@@ -111,9 +62,15 @@ function HandoverForm() {
         description={`Turn what you know into a clear, useful starting point for the next ${bundle.role.title}.`}
         action={statusPill}
       />
+      {isIncoming && (
+        <div className="mb-5 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm leading-6 text-sky-800">
+          <b>This isn’t your progress.</b> The previous {bundle.role.title} filled in this handover when they left
+          {filledCount === sections.length ? ', so every section is green' : ''}. Read it to get started. You’ll write your own here when you hand the role over.
+        </div>
+      )}
       <Card className="mb-5 p-5">
         <div className="mb-3 flex justify-between text-sm">
-          <b>{filledCount} of {sections.length} sections complete</b>
+          <b>{filledCount} of {sections.length} sections {isIncoming ? 'written by the previous lead' : 'complete'}</b>
           <span className="font-bold text-emerald-700">{Math.round((filledCount / sections.length) * 100)}%</span>
         </div>
         <Progress value={(filledCount / sections.length) * 100} />

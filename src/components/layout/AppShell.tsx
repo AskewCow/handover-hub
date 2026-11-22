@@ -4,15 +4,9 @@ import { ActionMenu, Avatar, Icon, useToast } from '@/components/ui';
 import { updateOwnProfile } from '@/lib/api';
 import { SOCIETY_NAME } from '@/lib/config';
 import { navGroups, type View } from '@/lib/navigation';
-import type { MemberType } from '@/lib/types';
 import { initials, memberTypeLabels } from '@/lib/people';
 import { useWorkspace } from '@/workspace/WorkspaceProvider';
 import { AccountSettings } from './AccountSettings';
-
-/** Incoming members read the previous holder's handover rather than writing one. */
-function navLabel(item: View, memberType: MemberType): string {
-  return item === 'Outgoing handover' && memberType === 'incoming' ? 'Handover notes' : item;
-}
 
 export function AppShell({ view, children }: { view: View; children: ReactNode }) {
   const { signOut, refreshProfile } = useAuth();
@@ -71,7 +65,7 @@ export function AppShell({ view, children }: { view: View; children: ReactNode }
                   className={`mb-0.5 flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-[13px] font-medium transition ${view === item ? 'bg-white/10 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
                 >
                   <span className={view === item ? 'text-emerald-300' : ''}><Icon name={item} size={17} /></span>
-                  {navLabel(item, profile.member_type)}
+                  {item}
                   {item === 'Messages' && unread > 0 && (
                     <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-emerald-400 px-1.5 text-[10px] font-bold text-[#102521]" aria-label={`${unread} unread`}>{unread}</span>
                   )}
