@@ -50,7 +50,7 @@ export function AppShell({ view, children }: { view: View; children: ReactNode }
           </label>
         </div>
 
-        <nav className="flex-1 overflow-y-auto px-3 pb-4">
+        <nav className="sidebar-scroll flex-1 overflow-y-auto px-3 pb-4">
           {navGroups.map(g => (
             <div key={g.label} className="mb-4">
               <p className="mb-1 px-3 text-[9px] font-bold uppercase tracking-[.16em] text-slate-500">{g.label}</p>
