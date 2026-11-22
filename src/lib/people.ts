@@ -4,6 +4,7 @@
 export function initials(name: string): string {
   return name
     .split(/\s+/)
+    .map(word => word.replace(/[^\p{L}\p{N}]/gu, '')) // "#committee (Discord)" → "CD"
     .filter(Boolean)
     .map(part => part[0])
     .join('')

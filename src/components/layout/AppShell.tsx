@@ -2,16 +2,19 @@ import { useState, type ReactNode } from 'react';
 import { useAuth } from '@/auth/AuthProvider';
 import { ActionMenu, Avatar, Icon, useToast } from '@/components/ui';
 import { updateOwnProfile } from '@/lib/api';
+import { SOCIETY_NAME } from '@/lib/config';
 import { navGroups, type View } from '@/lib/navigation';
 import { initials, memberTypeLabels } from '@/lib/people';
 import { useWorkspace } from '@/workspace/WorkspaceProvider';
+import { AccountSettings } from './AccountSettings';
 
 export function AppShell({ view, children }: { view: View; children: ReactNode }) {
   const { signOut, refreshProfile } = useAuth();
-  const { profile, roles, roleId, setRoleId, isOwnRole, go, userId, bundle } = useWorkspace();
+  const { profile, roles, roleId, setRoleId, isOwnRole, go, userId, bundle, unread } = useWorkspace();
   const toast = useToast();
   const [menu, setMenu] = useState(false);
-  const society = bundle?.role.society ?? roles[0]?.society ?? 'Example Tech Society';
+  const [settings, setSettings] = useState(false);
+  const society = bundle?.role.society ?? roles[0]?.society ?? SOCIETY_NAME;
   const selectedRole = roles.find(r => r.id === roleId);
 
   async function makeMyRole() {
@@ -63,6 +66,9 @@ export function AppShell({ view, children }: { view: View; children: ReactNode }
                 >
                   <span className={view === item ? 'text-emerald-300' : ''}><Icon name={item} size={17} /></span>
                   {item}
+                  {item === 'Messages' && unread > 0 && (
+                    <span className="ml-auto grid h-5 min-w-5 place-items-center rounded-full bg-emerald-400 px-1.5 text-[10px] font-bold text-[#102521]" aria-label={`${unread} unread`}>{unread}</span>
+                  )}
                 </button>
               ))}
             </div>
@@ -82,6 +88,7 @@ export function AppShell({ view, children }: { view: View; children: ReactNode }
                 placement="up"
                 actions={[
                   ...(!isOwnRole && selectedRole ? [{ label: `Make ${selectedRole.title} my role`, onSelect: () => void makeMyRole() }] : []),
+                  { label: 'Account settings', onSelect: () => setSettings(true) },
                   { label: 'Sign out', onSelect: () => void signOut(), danger: true },
                 ]}
               />
@@ -90,6 +97,7 @@ export function AppShell({ view, children }: { view: View; children: ReactNode }
         </div>
       </aside>
 
+      {settings && <AccountSettings onClose={() => setSettings(false)} />}
       {menu && <button className="fixed inset-0 z-30 bg-slate-950/30 lg:hidden" onClick={() => setMenu(false)} aria-label="Close navigation" />}
 
       <main className="min-h-screen lg:pl-[264px]">

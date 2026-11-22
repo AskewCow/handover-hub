@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
 import { useAuth } from '@/auth/AuthProvider';
 import { useToast } from '@/components/ui';
-import { listRoles, loadRoleBundle } from '@/lib/api';
+import { countUnread, listAllProfiles, listRoles, loadRoleBundle } from '@/lib/api';
 import type { View } from '@/lib/navigation';
 import type { Profile, Role, RoleBundle } from '@/lib/types';
 
@@ -24,6 +24,14 @@ interface Workspace {
    */
   run: (action: () => Promise<unknown>, successMessage?: string) => Promise<boolean>;
   go: (view: View) => void;
+  /** Everyone in the society (for buddies, messages and the lead view). */
+  members: Profile[];
+  /** Unread messages for the signed-in member, refreshed every 30 seconds. */
+  unread: number;
+  refreshUnread: () => Promise<void>;
+  /** The person the Messages page should open with (set by "Send a message"). */
+  conversationWith: string | null;
+  openConversation: (profileId: string | null) => void;
 }
 
 const WorkspaceContext = createContext<Workspace | null>(null);
@@ -36,7 +44,32 @@ export function WorkspaceProvider({ go, children }: { go: (view: View) => void; 
   const [bundle, setBundle] = useState<RoleBundle | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [members, setMembers] = useState<Profile[]>([]);
+  const [unread, setUnread] = useState(0);
+  const [conversationWith, setConversationWith] = useState<string | null>(null);
   const userId = session!.user.id;
+
+  useEffect(() => {
+    listAllProfiles().then(setMembers).catch(() => setMembers([]));
+  }, [profile]);
+
+  const refreshUnread = useCallback(async () => {
+    setUnread(await countUnread(userId).catch(() => 0));
+  }, [userId]);
+
+  useEffect(() => {
+    void refreshUnread();
+    const timer = window.setInterval(() => void refreshUnread(), 30_000);
+    return () => window.clearInterval(timer);
+  }, [refreshUnread]);
+
+  const openConversation = useCallback(
+    (profileId: string | null) => {
+      setConversationWith(profileId);
+      go('Messages');
+    },
+    [go],
+  );
 
   useEffect(() => {
     listRoles()
@@ -54,14 +87,14 @@ export function WorkspaceProvider({ go, children }: { go: (view: View) => void; 
   const refresh = useCallback(async () => {
     if (!roleId) return;
     try {
-      setBundle(await loadRoleBundle(roleId, userId));
+      setBundle(await loadRoleBundle(roleId, profile!));
       setError('');
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
     }
-  }, [roleId, userId]);
+  }, [roleId, profile]);
 
   useEffect(() => {
     setLoading(true);
@@ -88,7 +121,25 @@ export function WorkspaceProvider({ go, children }: { go: (view: View) => void; 
 
   return (
     <WorkspaceContext.Provider
-      value={{ userId, profile, roles, roleId, setRoleId, isOwnRole: roleId === profile.role_id, bundle, loading, error, refresh, run, go }}
+      value={{
+        userId,
+        profile,
+        roles,
+        roleId,
+        setRoleId,
+        isOwnRole: roleId === profile.role_id,
+        bundle,
+        loading,
+        error,
+        refresh,
+        run,
+        go,
+        members,
+        unread,
+        refreshUnread,
+        conversationWith,
+        openConversation,
+      }}
     >
       {children}
     </WorkspaceContext.Provider>

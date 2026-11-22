@@ -7,6 +7,7 @@ import type {
   Decision,
   HandoverSection,
   HandoverSectionKey,
+  Message,
   OnboardingStep,
   Profile,
   RecurringTask,
@@ -53,11 +54,12 @@ export async function listRoles(): Promise<Role[]> {
   return unwrap(await supabase.from('roles').select('*').order('position')) as Role[];
 }
 
-export async function loadRoleBundle(roleId: string, userId: string): Promise<RoleBundle> {
+export async function loadRoleBundle(roleId: string, viewer: Profile): Promise<RoleBundle> {
+  const userId = viewer.id;
   const byRole = <T,>(table: string, order: string, ascending = true) =>
     supabase.from(table).select('*').eq('role_id', roleId).order(order, { ascending }).then(r => unwrap(r) as T[]);
 
-  const [role, responsibilities, weekItems, recurringTasks, steps, contacts, tasks, decisions, handover, checkin, incoming] =
+  const [role, responsibilities, weekItems, recurringTasks, steps, contacts, tasks, decisions, handover, checkins, incoming] =
     await Promise.all([
       supabase.from('roles').select('*').eq('id', roleId).single().then(r => unwrap(r) as Role),
       byRole<Responsibility>('responsibilities', 'position'),
@@ -68,7 +70,7 @@ export async function loadRoleBundle(roleId: string, userId: string): Promise<Ro
       byRole<Task>('tasks', 'created_at'),
       byRole<Decision>('decisions', 'decided_on', false),
       byRole<HandoverSection>('handover_sections', 'section'),
-      supabase.from('checkins').select('*').eq('role_id', roleId).maybeSingle().then(r => unwrap(r) as Checkin | null),
+      supabase.from('checkins').select('*').eq('role_id', roleId).then(r => unwrap(r) as Checkin[]),
       supabase
         .from('profiles')
         .select('*')
@@ -96,9 +98,9 @@ export async function loadRoleBundle(roleId: string, userId: string): Promise<Ro
     contacts,
     tasks,
     decisions,
-    checkin,
     handover,
     incomingMember: incoming,
+    checkin: pickCheckin(checkins, viewer, roleId, incoming),
   };
 }
 
@@ -119,6 +121,14 @@ export async function listAssistantQuestions(limit = 20): Promise<AssistantQuest
   return unwrap(
     await supabase.from('assistant_questions').select('*').order('created_at', { ascending: false }).limit(limit),
   ) as AssistantQuestion[];
+}
+
+/** A new member sees only their own check-in; buddies and leads see the incoming member's. */
+function pickCheckin(checkins: Checkin[], viewer: Profile, roleId: string, incoming: Profile | null): Checkin | null {
+  const own = checkins.find(c => c.user_id === viewer.id) ?? null;
+  const viewerIsNewHere = viewer.member_type === 'incoming' && viewer.role_id === roleId;
+  if (viewerIsNewHere || own) return own;
+  return checkins.find(c => c.user_id === incoming?.id) ?? null;
 }
 
 export async function getCheckinNote(roleId: string, userId: string): Promise<string> {
@@ -169,8 +179,9 @@ export async function saveCheckinNote(roleId: string, userId: string, body: stri
   unwrap(await supabase.from('checkin_notes').upsert({ role_id: roleId, user_id: userId, body }));
 }
 
-export async function saveCheckin(roleId: string, values: Partial<Checkin>): Promise<void> {
-  unwrap(await supabase.from('checkins').upsert({ role_id: roleId, ...values }));
+/** Saves the check-in of `memberId` (the incoming member it belongs to). */
+export async function saveCheckin(roleId: string, memberId: string, values: Partial<Checkin>): Promise<void> {
+  unwrap(await supabase.from('checkins').upsert({ role_id: roleId, user_id: memberId, ...values }));
 }
 
 export async function saveHandoverSection(
@@ -179,6 +190,48 @@ export async function saveHandoverSection(
   values: { title: string; body: string },
 ): Promise<void> {
   unwrap(await supabase.from('handover_sections').upsert({ role_id: roleId, section, ...values }));
+}
+
+// ---------------------------------------------------------------------------
+// Messages (RLS limits every query to conversations the member is part of)
+// ---------------------------------------------------------------------------
+
+export async function listMessages(): Promise<Message[]> {
+  return unwrap(await supabase.from('messages').select('*').order('created_at')) as Message[];
+}
+
+export async function sendMessage(senderId: string, recipientId: string, body: string): Promise<void> {
+  unwrap(await supabase.from('messages').insert({ sender_id: senderId, recipient_id: recipientId, body }));
+}
+
+export async function markConversationRead(userId: string, otherId: string): Promise<void> {
+  unwrap(
+    await supabase
+      .from('messages')
+      .update({ read_at: new Date().toISOString() })
+      .eq('recipient_id', userId)
+      .eq('sender_id', otherId)
+      .is('read_at', null),
+  );
+}
+
+export async function countUnread(userId: string): Promise<number> {
+  const { count, error } = await supabase
+    .from('messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('recipient_id', userId)
+    .is('read_at', null);
+  if (error) throw new Error(error.message);
+  return count ?? 0;
+}
+
+// ---------------------------------------------------------------------------
+// Account
+// ---------------------------------------------------------------------------
+
+export async function changePassword(password: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password });
+  if (error) throw new Error(error.message);
 }
 
 // ---------------------------------------------------------------------------

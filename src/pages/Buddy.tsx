@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Button, Card, Input, Modal, PageTitle, Pill, Textarea } from '@/components/ui';
-import { getCheckinNote, saveCheckin, saveCheckinNote, updateRole } from '@/lib/api';
+import { Button, Card, Input, Modal, PageTitle, Pill, Select, Textarea } from '@/components/ui';
+import { getCheckinNote, saveCheckin, saveCheckinNote, sendMessage, updateRole } from '@/lib/api';
 import { formatSlot, toDateTimeInput } from '@/lib/dates';
 import { initials } from '@/lib/people';
 import type { CheckinStatus } from '@/lib/types';
@@ -13,8 +13,11 @@ const statusPill: Record<CheckinStatus, { label: string; tone: 'blue' | 'green' 
 };
 
 export function Buddy() {
-  const { bundle, run } = useRole();
+  const { bundle, run, members, userId, openConversation } = useRole();
   const { role, checkin } = bundle;
+  const buddy = members.find(m => m.id === role.buddy_id) ?? null;
+  const buddyName = buddy?.full_name ?? role.buddy_name;
+  const youAreBuddy = role.buddy_id === userId;
   const [dialog, setDialog] = useState<'buddy' | 'schedule' | 'complete' | null>(null);
   const status = checkin?.status ?? 'not_booked';
   const pill = statusPill[status];
@@ -26,11 +29,11 @@ export function Buddy() {
         <Card className="overflow-hidden">
           <div className="h-20 bg-[#d9f3e7]" />
           <div className="px-6 pb-6">
-            <div className="-mt-9 grid h-16 w-16 place-items-center rounded-2xl border-4 border-white bg-[#173532] text-lg font-bold text-white">{role.buddy_name ? initials(role.buddy_name) : '?'}</div>
-            {role.buddy_name ? (
+            <div className="-mt-9 grid h-16 w-16 place-items-center rounded-2xl border-4 border-white bg-[#173532] text-lg font-bold text-white">{buddyName ? initials(buddyName) : '?'}</div>
+            {buddyName ? (
               <>
-                <Pill tone="green">YOUR BUDDY</Pill>
-                <h2 className="mt-3 text-xl font-semibold">{role.buddy_name}</h2>
+                <Pill tone="green">{youAreBuddy ? 'YOU ARE THE BUDDY' : 'YOUR BUDDY'}</Pill>
+                <h2 className="mt-3 text-xl font-semibold">{buddyName}</h2>
                 <p className="mt-1 text-sm text-slate-500">{role.buddy_title}</p>
                 {role.buddy_note && <p className="mt-5 text-sm leading-6 text-slate-600">{role.buddy_note}</p>}
               </>
@@ -41,16 +44,13 @@ export function Buddy() {
               </>
             )}
             <div className="mt-5 flex flex-wrap gap-2">
-              {role.buddy_email && (
-                <a
-                  href={`mailto:${role.buddy_email}?subject=${encodeURIComponent(`${role.title} handover question`)}`}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:-translate-y-px hover:border-slate-300"
-                >
-                  Send a message
-                </a>
-              )}
-              <Button secondary onClick={() => setDialog('buddy')}>{role.buddy_name ? 'Edit buddy' : 'Add buddy'}</Button>
+              {buddy && !youAreBuddy && <Button onClick={() => openConversation(buddy.id)}>Send a message</Button>}
+              {youAreBuddy && <Button onClick={() => openConversation(null)}>Open messages</Button>}
+              <Button secondary onClick={() => setDialog('buddy')}>{buddyName ? 'Edit buddy' : 'Add buddy'}</Button>
             </div>
+            {buddyName && !buddy && (
+              <p className="mt-3 text-xs text-slate-400">{buddyName} doesn’t have a Handover Hub account yet. Choose a member in “Edit buddy” to enable messages.</p>
+            )}
           </div>
         </Card>
 
@@ -66,7 +66,7 @@ export function Buddy() {
             <div className="flex shrink-0 flex-wrap items-start gap-2">
               {status !== 'complete' && <Button secondary onClick={() => setDialog('schedule')}>{status === 'scheduled' ? 'Reschedule' : 'Book check-in'}</Button>}
               {status === 'scheduled' && <Button onClick={() => setDialog('complete')}>Mark complete</Button>}
-              {status === 'complete' && <Button secondary onClick={() => run(() => saveCheckin(role.id, { status: 'scheduled' }), 'Check-in reopened')}>Reopen</Button>}
+              {status === 'complete' && <Button secondary onClick={() => run(() => saveCheckin(role.id, checkin!.user_id, { status: 'scheduled' }), 'Check-in reopened')}>Reopen</Button>}
             </div>
           </div>
           <div className="my-6 h-px bg-slate-100" />
@@ -158,20 +158,27 @@ function FormActions({ onClose, saving, label }: { onClose: () => void; saving: 
 }
 
 function BuddyForm({ onClose }: { onClose: () => void }) {
-  const { bundle, run } = useRole();
+  const { bundle, run, members } = useRole();
   const { role } = bundle;
-  const [name, setName] = useState(role.buddy_name);
+  const [buddyId, setBuddyId] = useState(role.buddy_id ?? '');
   const [title, setTitle] = useState(role.buddy_title);
   const [note, setNote] = useState(role.buddy_note);
-  const [email, setEmail] = useState(role.buddy_email);
   const [saving, setSaving] = useState(false);
+  const options = [{ value: '', label: 'No buddy' }, ...members.map(m => ({ value: m.id, label: m.full_name }))];
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
+    const person = members.find(m => m.id === buddyId);
     const ok = await run(
-      () => updateRole(role.id, { buddy_name: name.trim(), buddy_title: title.trim(), buddy_note: note.trim(), buddy_email: email.trim() }),
-      'Buddy saved',
+      () =>
+        updateRole(role.id, {
+          buddy_id: person?.id ?? null,
+          buddy_name: person?.full_name ?? '',
+          buddy_title: person ? title.trim() : '',
+          buddy_note: person ? note.trim() : '',
+        }),
+      person ? `${person.full_name} is now the buddy` : 'Buddy removed',
     );
     setSaving(false);
     if (ok) onClose();
@@ -180,9 +187,8 @@ function BuddyForm({ onClose }: { onClose: () => void }) {
   return (
     <Modal title="Handover buddy" onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
-        <Input label="Name" value={name} onChange={setName} placeholder="Riley Nguyen" required />
-        <Input label="Role or relationship" value={title} onChange={setTitle} placeholder="Former Partnerships Lead · 2024/25" />
-        <Input label="Email" type="email" value={email} onChange={setEmail} placeholder="Used by the “Send a message” button" />
+        <Select label="Buddy" value={buddyId} onChange={setBuddyId} options={options} hint="Members can message their buddy from this page." />
+        <Input label="Role or relationship" value={title} onChange={setTitle} placeholder="Former Partnerships Lead · 2025/26" />
         <Textarea label="What they can help with" value={note} onChange={setNote} placeholder="Partner history, negotiation context…" />
         <FormActions onClose={onClose} saving={saving} label="Save buddy" />
       </form>
@@ -191,14 +197,21 @@ function BuddyForm({ onClose }: { onClose: () => void }) {
 }
 
 function ScheduleForm({ onClose }: { onClose: () => void }) {
-  const { bundle, run } = useRole();
+  const { bundle, run, userId } = useRole();
   const [when, setWhen] = useState(toDateTimeInput(bundle.checkin?.scheduled_at ?? null));
+  const buddyId = bundle.role.buddy_id;
+  const notifyBuddy = Boolean(buddyId && buddyId !== userId);
   const [saving, setSaving] = useState(false);
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
-    const ok = await run(() => saveCheckin(bundle.role.id, { status: 'scheduled', scheduled_at: new Date(when).toISOString() }), 'Check-in scheduled');
+    const scheduledAt = new Date(when).toISOString();
+    const verb = bundle.checkin?.scheduled_at ? 'moved' : 'booked';
+    const ok = await run(async () => {
+      await saveCheckin(bundle.role.id, bundle.checkin?.user_id ?? userId, { status: 'scheduled', scheduled_at: scheduledAt });
+      if (notifyBuddy) await sendMessage(userId, buddyId!, `I’ve ${verb} our week-1 check-in for ${formatSlot(scheduledAt)}.`);
+    }, notifyBuddy ? 'Check-in scheduled. Your buddy has been messaged.' : 'Check-in scheduled');
     setSaving(false);
     if (ok) onClose();
   }
@@ -206,7 +219,7 @@ function ScheduleForm({ onClose }: { onClose: () => void }) {
   return (
     <Modal title="Schedule the week-1 check-in" onClose={onClose}>
       <form onSubmit={submit} className="space-y-4">
-        <Input label="Date and time" type="datetime-local" value={when} onChange={setWhen} required hint="Check-ins last 30 minutes." />
+        <Input label="Date and time" type="datetime-local" value={when} onChange={setWhen} required hint={notifyBuddy ? 'Check-ins last 30 minutes. Your buddy gets a message with the new time.' : 'Check-ins last 30 minutes.'} />
         <FormActions onClose={onClose} saving={saving} label="Save slot" />
       </form>
     </Modal>
@@ -221,7 +234,7 @@ function CompleteForm({ onClose }: { onClose: () => void }) {
   async function submit(e: FormEvent) {
     e.preventDefault();
     setSaving(true);
-    const ok = await run(() => saveCheckin(bundle.role.id, { status: 'complete', outcome: outcome.trim() }), 'Check-in marked complete');
+    const ok = await run(() => saveCheckin(bundle.role.id, bundle.checkin!.user_id, { status: 'complete', outcome: outcome.trim() }), 'Check-in marked complete');
     setSaving(false);
     if (ok) onClose();
   }

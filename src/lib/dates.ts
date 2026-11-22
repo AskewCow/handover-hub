@@ -30,6 +30,13 @@ export function formatSlot(iso: string, minutes = 30): string {
   return `${day} · ${time(start)}–${time(end)}`;
 }
 
+/** "14:05" today, otherwise "21 Nov, 14:05" */
+export function formatMessageTime(iso: string, now = new Date()): string {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  return d.toDateString() === now.toDateString() ? time : `${formatShortDate(iso)}, ${time}`;
+}
+
 /** "today", "yesterday", "3 days ago" */
 export function relativeDays(iso: string, now = new Date()): string {
   const days = daysSince(iso, now);

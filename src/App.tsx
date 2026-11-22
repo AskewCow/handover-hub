@@ -13,6 +13,7 @@ import { Dashboard } from '@/pages/Dashboard';
 import { DecisionLog } from '@/pages/DecisionLog';
 import { Handover } from '@/pages/Handover';
 import { LeadView } from '@/pages/LeadView';
+import { Messages } from '@/pages/Messages';
 import { Onboarding } from '@/pages/Onboarding';
 import { RoleGuide } from '@/pages/RoleGuide';
 import { Tasks } from '@/pages/Tasks';
@@ -26,6 +27,7 @@ const pages: Record<View, ComponentType> = {
   Tasks,
   'Decision log': DecisionLog,
   'Buddy & check-in': Buddy,
+  Messages,
   'Outgoing handover': Handover,
   'Ask assistant': Assistant,
   'Lead view': LeadView,

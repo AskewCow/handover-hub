@@ -52,7 +52,7 @@ async function rows(db: SupabaseClient, table: string, roleId: string, order: st
 }
 
 /** Turns the role's content into a tagged plain-text document for the model. */
-async function buildContext(db: SupabaseClient, roleId: string): Promise<string | null> {
+async function buildContext(db: SupabaseClient, roleId: string, userId: string): Promise<string | null> {
   const { data: role, error } = await db.from('roles').select('*').eq('id', roleId).maybeSingle();
   if (error) throw new Error(error.message);
   if (!role) return null;
@@ -69,7 +69,7 @@ async function buildContext(db: SupabaseClient, roleId: string): Promise<string 
     rows(db, 'checkins', roleId, 'role_id'),
   ]);
   const contactName = (id: unknown) => contacts.find(c => c.id === id)?.name;
-  const checkin = checkins[0];
+  const checkin = checkins.find(c => c.user_id === userId);
 
   const parts = [
     `ROLE: ${role.title} at ${role.society} (${role.term})${isStale(role.reviewed_at) ? ' — role guide STALE (not reviewed in 30+ days)' : ''}`,
@@ -84,7 +84,7 @@ async function buildContext(db: SupabaseClient, roleId: string): Promise<string 
     `[Decision log · Decisions]\n${decisions
       .map(d => `- ${d.decided_on}: ${d.title}. Reason: ${d.reason}${d.tried_before ? ` Tried before: ${d.tried_before}` : ''} (by ${d.author})`)
       .join('\n') || '(none)'}`,
-    `[Buddy & check-in · Buddy]\n${role.buddy_name ? `${role.buddy_name}, ${role.buddy_title}. ${role.buddy_note}` : '(no buddy named)'}\nWeek-1 check-in: ${checkin ? `${checkin.status}${checkin.scheduled_at ? ` at ${checkin.scheduled_at}` : ''}` : 'not booked'}`,
+    `[Buddy & check-in · Buddy]\n${role.buddy_name ? `${role.buddy_name}, ${role.buddy_title}. ${role.buddy_note}` : '(no buddy named)'}\nYour week-1 check-in: ${checkin ? `${checkin.status}${checkin.scheduled_at ? ` at ${checkin.scheduled_at}` : ''}` : 'not booked'}`,
     `[Outgoing handover · Notes from the previous holder]\n${handover.map(h => `- ${HANDOVER_LABELS[String(h.section)] ?? h.section}: ${h.title}. ${h.body}`).join('\n') || '(none)'}`,
   ];
   return parts.join('\n\n');
@@ -122,7 +122,7 @@ export async function POST(request: Request): Promise<Response> {
 
   let context: string | null;
   try {
-    context = await buildContext(db, roleId);
+    context = await buildContext(db, roleId, auth.user.id);
   } catch {
     return json(500, { error: 'Could not read the handover content.' });
   }

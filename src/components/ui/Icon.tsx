@@ -9,6 +9,7 @@ const icons: Record<string, ReactNode> = {
   'Decision log': <path d="M14 3v4a1 1 0 0 0 1 1h4M6 3h8l5 5v13H6zM9 13h6M9 17h5" />,
   'Buddy & check-in': <path d="M15 19a6 6 0 0 0-12 0M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM17 11l2 2 4-5" />,
   'Outgoing handover': <path d="M8 4H4v16h13v-4M12 3h8v8M20 3 9 14" />,
+  Messages: <path d="M4 6h16v12H4zM4 7l8 6 8-6" />,
   'Ask assistant': <path d="M4 5h16v12H8l-4 4V5ZM8 9h8M8 13h5" />,
   'Lead view': <path d="M4 19V9M10 19V5M16 19v-7M22 19H2" />,
   Logo: <path d="M7 4v16M17 4v16M7 9h10M7 15h10" />,

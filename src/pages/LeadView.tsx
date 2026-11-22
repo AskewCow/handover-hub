@@ -40,7 +40,7 @@ export function LeadView() {
 
   useEffect(() => {
     if (!isLead || !roles.length) return;
-    Promise.all([Promise.all(roles.map(r => loadRoleBundle(r.id, userId))), listAssistantQuestions(), listAllProfiles()])
+    Promise.all([Promise.all(roles.map(r => loadRoleBundle(r.id, profile))), listAssistantQuestions(), listAllProfiles()])
       .then(([bundles, qs, ps]) => {
         setRows(bundles.map(b => ({ bundle: b, score: completeness(b), stale: staleCount(b), checkin: b.checkin?.status ?? 'not_booked' })));
         setQuestions(qs);

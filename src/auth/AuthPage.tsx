@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Button, ErrorNote, Icon, Input, Select } from '@/components/ui';
 import { listRoleOptions } from '@/lib/api';
+import { SOCIETY_NAME } from '@/lib/config';
 import { useAuth } from './AuthProvider';
 
 type Mode = 'sign-in' | 'sign-up';
@@ -58,7 +59,7 @@ export function AuthPage() {
           <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#6ee7b7] text-[#102521]"><Icon name="Logo" size={21} /></span>
           <div>
             <p className="font-semibold tracking-tight">Handover Hub</p>
-            <p className="text-[10px] uppercase tracking-widest text-slate-400">Example Tech Society</p>
+            <p className="text-[10px] uppercase tracking-widest text-slate-400">{SOCIETY_NAME}</p>
           </div>
         </div>
         <div>

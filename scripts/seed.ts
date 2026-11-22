@@ -1,11 +1,16 @@
 // npm run seed — resets the demo content and creates/updates the test accounts.
 // Safe to re-run: it replaces each demo role's content and resets test-account passwords and progress.
-// It keeps assistant questions and private notes, which are evidence from testing.
+// Test accounts (@handoverhub.test) and roles that are no longer in seed-data.ts are deleted.
+//
+// By default it keeps messages, assistant questions and private notes, which are evidence from testing.
+// npm run seed:fresh also clears those for every test account: use it before each new test session.
 //
 // Needs in .env.local: VITE_SUPABASE_URL, SUPABASE_SECRET_KEY, TEST_USER_PASSWORD.
 import { createClient } from '@supabase/supabase-js';
-import { at, dateOnly, daysAgo, daysFromNow, roles, SOCIETY, TERM, testUsers } from './seed-data';
+import { at, dateOnly, daysAgo, daysFromNow, roles, SOCIETY, TERM, testUsers, welcomeMessages } from './seed-data';
 
+const fresh = process.argv.includes('--fresh');
+const TEST_DOMAIN = '@handoverhub.test';
 const url = process.env.VITE_SUPABASE_URL;
 const secret = process.env.SUPABASE_SECRET_KEY;
 const password = process.env.TEST_USER_PASSWORD;
@@ -34,12 +39,16 @@ const CONTENT_TABLES = ['responsibilities', 'week_items', 'recurring_tasks', 'on
 async function seedRoles() {
   const roleIds = roles.map(r => r.role.id);
 
+  // Remove roles that are no longer part of the demo (their content is deleted with them).
+  await check('remove old roles', db.from('roles').delete().not('id', 'in', `(${roleIds.join(',')})`));
+
   await check(
     'roles',
     db.from('roles').upsert(
       roles.map(({ role }, position) => {
         const { reviewedDaysAgo, ...rest } = role;
-        return { ...rest, society: SOCIETY, term: TERM, position, reviewed_at: daysAgo(reviewedDaysAgo) };
+        // buddy_id is linked in linkBuddies(), once the accounts exist.
+        return { ...rest, buddy_id: null, society: SOCIETY, term: TERM, position, reviewed_at: daysAgo(reviewedDaysAgo) };
       }),
     ),
   );
@@ -91,9 +100,6 @@ async function seedRoles() {
       );
     }
 
-    const { status, inDays, hour, outcome } = seed.checkin;
-    await check('checkins', db.from('checkins').insert({ role_id: roleId, status, scheduled_at: inDays == null ? null : at(inDays, hour ?? 14), outcome: outcome ?? '' }));
-
     const sections = Object.entries(seed.handover).map(([section, [title, body]]) => ({ role_id: roleId, section, title, body, updated_by: null, updated_at: daysAgo(2) }));
     if (sections.length) await check('handover_sections', db.from('handover_sections').insert(sections));
 
@@ -101,8 +107,16 @@ async function seedRoles() {
   }
 }
 
-async function seedUsers() {
+async function seedUsers(): Promise<Map<string, string>> {
+  const ids = new Map<string, string>();
   const existing = await check('list users', db.auth.admin.listUsers({ perPage: 1000 }));
+
+  // Delete test accounts that are no longer listed (their profile, messages and notes go with them).
+  const wanted = new Set(testUsers.map(u => u.email));
+  for (const old of existing.users.filter(x => x.email?.endsWith(TEST_DOMAIN) && !wanted.has(x.email))) {
+    await check(`delete ${old.email}`, db.auth.admin.deleteUser(old.id));
+    console.log(`✗ removed ${old.email}`);
+  }
 
   for (const u of testUsers) {
     const metadata = { full_name: u.fullName, member_type: u.memberType === 'lead' ? 'incoming' : u.memberType, role_id: u.roleId };
@@ -128,7 +142,43 @@ async function seedUsers() {
       );
     }
 
+    if (u.checkin) {
+      const { status, inDays, hour, outcome } = u.checkin;
+      await check(
+        'checkin',
+        db.from('checkins').insert({ role_id: u.roleId, user_id: user.id, status, scheduled_at: inDays == null ? null : at(inDays, hour ?? 14), outcome: outcome ?? '' }),
+      );
+    }
+
+    ids.set(u.email, user.id);
     console.log(`✓ ${u.email} (${u.memberType}, ${u.roleId})`);
+  }
+  return ids;
+}
+
+async function linkBuddies(ids: Map<string, string>) {
+  for (const seed of roles) {
+    if (!seed.buddyEmail) continue;
+    await check(`buddy for ${seed.role.id}`, db.from('roles').update({ buddy_id: ids.get(seed.buddyEmail) }).eq('id', seed.role.id));
+  }
+}
+
+/** --fresh: clear messages, assistant questions and private notes for every test account. */
+async function clearActivity(ids: Map<string, string>) {
+  const userIds = [...ids.values()];
+  const list = `(${userIds.join(',')})`;
+  await check('clear messages', db.from('messages').delete().or(`sender_id.in.${list},recipient_id.in.${list}`));
+  await check('clear questions', db.from('assistant_questions').delete().in('user_id', userIds));
+  await check('clear notes', db.from('checkin_notes').delete().in('user_id', userIds));
+  console.log('✓ cleared messages, assistant questions and private notes');
+}
+
+async function seedMessages(ids: Map<string, string>) {
+  for (const m of welcomeMessages) {
+    const sender_id = ids.get(m.from)!;
+    const recipient_id = ids.get(m.to)!;
+    await check('clear welcome', db.from('messages').delete().eq('sender_id', sender_id).eq('recipient_id', recipient_id).eq('body', m.body));
+    await check('welcome message', db.from('messages').insert({ sender_id, recipient_id, body: m.body, created_at: daysAgo(m.hoursAgo / 24) }));
   }
 }
 
@@ -136,7 +186,11 @@ try {
   console.log('Seeding demo roles…');
   await seedRoles();
   console.log('Creating test accounts…');
-  await seedUsers();
+  const ids = await seedUsers();
+  await linkBuddies(ids);
+  if (fresh) await clearActivity(ids);
+  await seedMessages(ids);
+  console.log('✓ buddies linked and welcome message sent');
   console.log('\nDone. All test accounts use the password in TEST_USER_PASSWORD.');
 } catch (error) {
   console.error(`\nSeed failed: ${(error as Error).message}`);

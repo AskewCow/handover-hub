@@ -12,12 +12,13 @@ For each committee role it brings together:
 | **Contacts** | Who owns each relationship and who to ask about what. Anything not updated in 30 days is marked **Stale**. |
 | **Tasks** | Shared board. Warns when two people own open tasks for the same contact (or with the same title). |
 | **Decision log** | What was decided, why, and what was tried before. Searchable. |
-| **Buddy & check-in** | Named buddy, week-1 check-in booking and outcome, private notes (visible only to you). |
+| **Buddy & check-in** | Named buddy (a member account), week-1 check-in booking and outcome, private notes (visible only to you). Booking or moving the check-in messages the buddy. |
+| **Messages** | Private in-app messages between members, with an unread badge in the sidebar. "Send a message" on the buddy card opens the conversation. |
 | **Outgoing handover** | Guided five-step form for the leaver, saved as drafts. |
 | **Ask assistant** | Answers questions using only the role's own content, with sources. Runs on the server so the API key stays private. |
 | **Lead view** | Society leads only: completeness, stale items and check-in status for every role, CSV export, and recent assistant questions. |
 
-All demo content is fictional ("Example Tech Society"). No real people, contacts or logins.
+The workspace is set up for the Claude Builder Club. The demo people, partners and contact details are fictional, with no real logins or personal data.
 
 ## Tech stack
 
@@ -54,6 +55,7 @@ src/
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. **SQL Editor** → paste all of `supabase/schema.sql` → **Run**.
+   - Already ran an older `schema.sql`? Run the files in `supabase/migrations/` in order instead (002 adds messages, 003 makes week-1 check-ins per member).
 3. **Authentication → Sign In / Providers → Email**: turn **off** "Confirm email" (test accounts use addresses that can't receive mail).
 4. **Project Settings → API Keys**: copy the project URL, the **publishable** key and the **secret** key.
 
@@ -82,17 +84,18 @@ npm install
 npm run seed
 ```
 
-This creates four roles (Partnerships Lead, Events Coordinator, Marketing Lead, Treasurer) and these accounts, all with the password from `TEST_USER_PASSWORD`:
+This sets up the Claude Builder Club **Partnerships & Outreach Lead** role from the club's onboarding document (partners, owners, outreach rules, open leads and decisions) and these accounts, all with the password from `TEST_USER_PASSWORD`:
 
 | Email | Who | Use it to |
 |---|---|---|
-| `alex.incoming@handoverhub.test` | Alex Morgan, incoming Partnerships Lead | See a member part-way through onboarding |
-| `riley.outgoing@handoverhub.test` | Riley Nguyen, outgoing Partnerships Lead | Write the outgoing handover |
-| `morgan.lead@handoverhub.test` | Morgan Chen, society lead | Open the Lead view |
-| `tester@handoverhub.test` | Test Participant, incoming | Usability testing from a clean start |
-| `jamie.events@…`, `casey.marketing@…`, `jordan.treasurer@…` | Incoming members of the other roles | Fill out the Lead view |
+| `ambassador@handoverhub.test` | CBC Ambassador: onboarding buddy and society lead | Reply to new members' messages, see the Lead view |
+| `alex.incoming@handoverhub.test` | Alex Morgan, halfway through onboarding | See progress, a booked check-in and a claimed lead (Red Bull) |
+| `tester@handoverhub.test` | Test Participant, brand new | Usability testing from a clean start |
+| `tester2@handoverhub.test` | Second Participant, brand new | A second test session |
 
-Re-running `npm run seed` resets the demo content, passwords and checklist progress. It keeps assistant questions and private notes, since those are evidence from testing. Stale flags and due dates are relative to when you seed, so re-seed shortly before a test session.
+Personal contact details from the onboarding document (emails, phone numbers, handles) are deliberately not in the app: the repository is public and anyone can sign up. Each partner lists its CBC owner to ask instead.
+
+Re-running `npm run seed` resets the demo content, passwords and checklist progress, and removes test accounts or roles no longer in `scripts/seed-data.ts`. It keeps messages, assistant questions and private notes as testing evidence. **Before each test session run `npm run seed:fresh`**, which also clears those, so the participant starts with an empty inbox.
 
 ### 4. Run locally
 
@@ -112,6 +115,8 @@ Open http://localhost:5173. The assistant works locally too: Vite routes `/api/*
 ## Security notes
 
 - Row level security is on for every table. Signed-in members share the role content. Checklist ticks and private notes belong to their owner, and only leads can read everyone's assistant questions.
+- Messages can only be read by their sender and recipient, and only the recipient can mark them read.
+- Members can change their own name and password under **Account settings** (sidebar menu). There is no "forgot password" email: Supabase's built-in mailer only delivers to your own team's addresses, so a lead resets passwords in Supabase (Authentication → Users) or by re-running the seed for test accounts.
 - Self sign-up can choose "incoming" or "outgoing" but never "lead"; leads are set by the seed script or in the Supabase table editor (`profiles.member_type`).
 - The Anthropic key and the Supabase secret key never reach the browser.
 
@@ -123,6 +128,7 @@ Open http://localhost:5173. The assistant works locally too: Vite routes `/api/*
 | `npm run build` | Type-check and build for production |
 | `npm run typecheck` | Type-check only |
 | `npm run seed` | Reset demo content and test accounts |
+| `npm run seed:fresh` | Same, and clear test accounts' messages, questions and notes |
 
 ---
 

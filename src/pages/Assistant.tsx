@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Card, Icon, PageTitle, Pill, type Tone } from '@/components/ui';
 import { askAssistant } from '@/lib/api';
+import { ASSISTANT_SUGGESTIONS } from '@/lib/config';
 import { firstName } from '@/lib/people';
 import type { AskSource } from '@/lib/types';
 import { useRole } from '@/workspace/WorkspaceProvider';
@@ -12,7 +13,6 @@ interface Message {
   failed?: boolean;
 }
 
-const suggestions = ['What should I focus on in my first week?', 'Who should I ask about invoices or budgets?', 'What was decided before I joined, and why?'];
 
 const sourceTone: Record<string, Tone> = {
   'Role guide': 'blue',
@@ -120,7 +120,7 @@ export function Assistant() {
           </Card>
           <Card className="p-5">
             <h3 className="text-sm font-bold">Try asking</h3>
-            {suggestions.map(q => (
+            {ASSISTANT_SUGGESTIONS.map(q => (
               <button onClick={() => setQuestion(q)} key={q} className="mt-3 block w-full rounded-xl bg-slate-50 p-3 text-left text-xs leading-5 text-slate-600 hover:bg-slate-100">“{q}”</button>
             ))}
           </Card>

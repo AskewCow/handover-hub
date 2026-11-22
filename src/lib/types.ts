@@ -17,7 +17,8 @@ export interface Role {
   buddy_name: string;
   buddy_title: string;
   buddy_note: string;
-  buddy_email: string;
+  /** The buddy's member account, so messages reach them. Name/title/note are shown on the card. */
+  buddy_id: string | null;
   checkin_prompts: string[];
   reviewed_at: string;
   updated_at: string;
@@ -104,6 +105,8 @@ export interface Decision {
 
 export interface Checkin {
   role_id: string;
+  /** The incoming member this check-in belongs to. */
+  user_id: string;
   status: CheckinStatus;
   scheduled_at: string | null;
   outcome: string;
@@ -130,10 +133,23 @@ export interface RoleBundle {
   contacts: Contact[];
   tasks: Task[];
   decisions: Decision[];
+  /**
+   * The week-1 check-in shown for this role: the viewer's own if they are taking on this role,
+   * otherwise the incoming member's (so buddies and leads see it too).
+   */
   checkin: Checkin | null;
   handover: HandoverSection[];
   /** The profile currently holding this role as an incoming member, if any. */
   incomingMember: Profile | null;
+}
+
+export interface Message {
+  id: string;
+  sender_id: string;
+  recipient_id: string;
+  body: string;
+  created_at: string;
+  read_at: string | null;
 }
 
 /** Source label returned by the Ask assistant. */
