@@ -10,7 +10,7 @@ const MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-5-5';
 const DAILY_LIMIT = 40; // questions per member per 24 hours, to keep API costs predictable
 const MAX_QUESTION_LENGTH = 500;
 
-const SECTIONS = ['Role guide', 'Onboarding', 'Outreach contacts', 'Tasks', 'Decision log', 'Buddy & check-in', 'Outgoing handover'] as const;
+const SECTIONS = ['Role guide', 'Onboarding', 'Contacts', 'Tasks', 'Decision log', 'Buddy & check-in', 'Outgoing handover'] as const;
 
 const AnswerSchema = z.object({
   answer: z.string(),
@@ -77,11 +77,11 @@ async function buildContext(db: SupabaseClient, roleId: string, userId: string):
     `[Role guide · Core responsibilities]\n${responsibilities.map(r => `- ${r.body}`).join('\n') || '(none)'}`,
     `[Role guide · Typical week]\n${week.map(w => `- ${w.day}: ${w.body}`).join('\n') || '(none)'}${role.peak_note ? `\nPeak workload: ${role.peak_note}` : ''}`,
     `[Role guide · Recurring tasks]\n${recurring.map(r => `- ${r.name} — ${r.schedule}; tool: ${r.tool}; time: ${r.duration}`).join('\n') || '(none)'}`,
-    `[Role guide · Committee directory]\n${committee
+    `[Contacts · Committee directory]\n${committee
       .map(m => `- ${m.name}: ${m.committee_role}, ${m.email || 'no email'}, joined ${m.joined_on ?? 'unknown'}, ${m.left_on ? `left ${m.left_on}` : 'still on the committee'}`)
       .join('\n') || '(none)'}`,
     `[Onboarding · Checklist]\n${steps.map(s => `- (${s.phase}, due day ${s.due_day}) ${s.title}`).join('\n') || '(none)'}`,
-    `[Outreach contacts · Partners and leads]\n${contacts.map(c => `- ${c.name} (${c.owner}): ask about ${c.ask_about}${isStale(c.updated_at) ? ' — STALE, last updated over 30 days ago' : ''}`).join('\n') || '(none)'}`,
+    `[Role guide · Outreach contacts]\n${contacts.map(c => `- ${c.name} (${c.owner}): ask about ${c.ask_about}${isStale(c.updated_at) ? ' — STALE, last updated over 30 days ago' : ''}`).join('\n') || '(none)'}`,
     `[Tasks · Task tracker]\n${tasks
       .map(t => `- ${t.title} — status: ${t.status}; owner: ${t.assignee ?? 'unassigned'}${t.due_date ? `; due ${t.due_date}` : ''}${t.contact_id ? `; contact: ${contactName(t.contact_id)}` : ''}`)
       .join('\n') || '(none)'}`,

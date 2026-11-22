@@ -1,15 +1,16 @@
 import { useState } from 'react';
 import { Button, Card, Empty, PageTitle, Pill } from '@/components/ui';
 import { updateRole } from '@/lib/api';
-import { formatDate, isStale, relativeDays, toDateInput } from '@/lib/dates';
+import { OutreachContacts } from '@/components/OutreachContacts';
+import { isStale, relativeDays } from '@/lib/dates';
 import { newDraftId, syncList, type DraftRow } from '@/lib/syncList';
-import type { CommitteeMember, Responsibility, WeekItem } from '@/lib/types';
+import type { Responsibility, WeekItem } from '@/lib/types';
 import { useRole } from '@/workspace/WorkspaceProvider';
 
 export function RoleGuide() {
   const { bundle, run } = useRole();
   const [editing, setEditing] = useState(false);
-  const { role, responsibilities, weekItems, committee } = bundle;
+  const { role, responsibilities, weekItems } = bundle;
   const stale = isStale(role.reviewed_at);
 
   if (editing) return <RoleGuideEditor onDone={() => setEditing(false)} />;
@@ -66,7 +67,7 @@ export function RoleGuide() {
           )}
         </Card>
       </div>
-      <CommitteeDirectory members={committee} />
+      <OutreachContacts />
     </>
   );
 }
@@ -101,7 +102,6 @@ function RoleGuideEditor({ onDone }: { onDone: () => void }) {
   const { role } = bundle;
   const resp = useDraftList<Responsibility>(bundle.responsibilities);
   const week = useDraftList<WeekItem>(bundle.weekItems);
-  const committee = useDraftList<CommitteeMember>(bundle.committee);
   const [peakNote, setPeakNote] = useState(role.peak_note);
   const [saving, setSaving] = useState(false);
 
@@ -112,7 +112,6 @@ function RoleGuideEditor({ onDone }: { onDone: () => void }) {
         Promise.all([
           syncList('responsibilities', bundle.responsibilities, resp.rows, ['body'], { role_id: role.id }),
           syncList('week_items', bundle.weekItems, week.rows, ['day', 'body'], { role_id: role.id }),
-          syncList('committee_members', bundle.committee, committee.rows, ['name', 'committee_role', 'email', 'joined_on', 'left_on']),
           updateRole(role.id, { peak_note: peakNote.trim(), reviewed_at: new Date().toISOString() }),
         ]),
       'Role guide saved',
@@ -166,68 +165,6 @@ function RoleGuideEditor({ onDone }: { onDone: () => void }) {
           </label>
         </Card>
       </div>
-      <Card className="mt-4 p-6">
-        <h2 className="text-lg font-semibold">Committee directory</h2>
-        <p className="mb-4 mt-1 text-xs text-slate-500">Leave “Left” empty for anyone still on the committee.</p>
-        <div className="mb-2 hidden grid-cols-[1fr_1fr_1.3fr_.8fr_.8fr_auto] gap-2 text-[11px] font-bold uppercase tracking-wider text-slate-400 sm:grid">
-          <span>Name</span><span>Role</span><span>Email</span><span>Joined</span><span>Left</span><span className="w-8" />
-        </div>
-        <div className="space-y-3">
-          {committee.rows.map(m => (
-            <div key={m.id} className="grid gap-2 sm:grid-cols-[1fr_1fr_1.3fr_.8fr_.8fr_auto]">
-              <input className={cellClass} value={m.name ?? ''} onChange={e => committee.change(m.id, { name: e.target.value })} placeholder="Name" aria-label="Name" />
-              <input className={cellClass} value={m.committee_role ?? ''} onChange={e => committee.change(m.id, { committee_role: e.target.value })} placeholder="Role" aria-label="Committee role" />
-              <input className={cellClass} type="email" value={m.email ?? ''} onChange={e => committee.change(m.id, { email: e.target.value })} placeholder="Email" aria-label="Email" />
-              <input className={cellClass} type="date" value={toDateInput(m.joined_on ?? null)} onChange={e => committee.change(m.id, { joined_on: e.target.value })} aria-label="Joined" />
-              <input className={cellClass} type="date" value={toDateInput(m.left_on ?? null)} onChange={e => committee.change(m.id, { left_on: e.target.value })} aria-label="Left" />
-              <RemoveButton onClick={() => committee.remove(m.id)} />
-            </div>
-          ))}
-        </div>
-        <AddButton onClick={() => committee.add({ name: '', committee_role: '', email: '', joined_on: '', left_on: '' })}>Add committee member</AddButton>
-      </Card>
     </>
   );
-}
-
-// ---------------------------------------------------------------------------
-// Committee directory (read-only view)
-// ---------------------------------------------------------------------------
-
-const directoryColumns = 'md:grid-cols-[1fr_1fr_1.3fr_.7fr_.8fr]';
-
-function CommitteeDirectory({ members }: { members: CommitteeMember[] }) {
-  return (
-    <Card className="mt-4 overflow-hidden">
-      <div className="border-b border-slate-100 p-6">
-        <h2 className="text-lg font-semibold">Committee directory</h2>
-        <p className="mt-1 text-xs text-slate-500">Everyone on the committee, how to reach them, and when they were involved.</p>
-      </div>
-      {members.length === 0 ? (
-        <Empty title="No committee members yet" text="Edit the role guide to add the committee." />
-      ) : (
-        <>
-          <div className={`hidden ${directoryColumns} gap-3 border-b border-slate-100 bg-slate-50/70 px-6 py-3 text-[11px] font-bold uppercase tracking-wider text-slate-400 md:grid`}>
-            <span>Name</span><span>Role</span><span>Email</span><span>Joined</span><span>Left</span>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {members.map(m => (
-              <div key={m.id} className={`grid grid-cols-2 gap-x-3 gap-y-2 px-5 py-4 text-sm ${directoryColumns} md:items-center md:px-6`}>
-                <b className={`col-span-2 md:col-span-1 ${m.left_on ? 'text-slate-400' : ''}`}>{m.name}</b>
-                <span className="text-slate-600"><Label>Role</Label>{m.committee_role}</span>
-                <span className="min-w-0 truncate"><Label>Email</Label>{m.email ? <a href={`mailto:${m.email}`} className="text-emerald-700 hover:underline">{m.email}</a> : '—'}</span>
-                <span className="text-slate-500"><Label>Joined</Label>{m.joined_on ? formatDate(m.joined_on) : '—'}</span>
-                <span className="text-slate-500"><Label>Left</Label>{m.left_on ? formatDate(m.left_on) : <Pill tone="green">Current member</Pill>}</span>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
-    </Card>
-  );
-}
-
-/** Column name shown above each value on small screens, where the table header is hidden. */
-function Label({ children }: { children: string }) {
-  return <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wide text-slate-400 md:hidden">{children}</span>;
 }

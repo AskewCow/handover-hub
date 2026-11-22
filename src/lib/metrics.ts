@@ -118,7 +118,7 @@ export function findOverlap(
 // "Needs attention" panel
 // ---------------------------------------------------------------------------
 
-export type AttentionTarget = 'Outreach contacts' | 'Onboarding' | 'Tasks' | 'Role guide' | 'Buddy & check-in';
+export type AttentionTarget = 'Contacts' | 'Onboarding' | 'Tasks' | 'Role guide' | 'Buddy & check-in';
 
 export interface AttentionItem {
   key: string;
@@ -135,9 +135,9 @@ export function attentionItems(bundle: RoleBundle, joinedAt: string, now = new D
   for (const c of staleContacts(bundle)) {
     items.push({
       key: `stale-${c.id}`,
-      title: 'Contact may be out of date',
+      title: 'Outreach contact may be out of date',
       detail: `${c.name} · last checked ${daysSince(c.updated_at, now)} days ago`,
-      target: 'Outreach contacts',
+      target: 'Role guide',
       badge: 'Stale',
       tone: 'red',
     });

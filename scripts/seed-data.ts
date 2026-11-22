@@ -99,7 +99,7 @@ export const roles: RoleSeed[] = [
       ['Open the ServiceNow partnership proposal with your @tcd email', 'Access', 1, 'https://drive.google.com/file/d/1N4ubnkq0UzcwMxzd0bj2CAwne7nlyKX4/view?usp=sharing'],
       ['Meet your ambassador (your onboarding buddy)', 'Introductions', 3, '#/buddy'],
       ['Go through the role guide', 'Introductions', 3, '#/role-guide'],
-      ['Learn who owns each current partner', 'Introductions', 4, '#/contacts'],
+      ['Learn who owns each outreach partner', 'Introductions', 4, '#/role-guide'],
       ['Look through the decision log', 'First tasks', 5, '#/decisions'],
       ['Book your week-1 check-in with your ambassador', 'First tasks', 7, '#/buddy'],
     ],

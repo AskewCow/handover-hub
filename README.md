@@ -7,9 +7,9 @@ For each committee role it brings together:
 | Page | What it does |
 |---|---|
 | **Dashboard** | Handover completeness, onboarding progress and a "needs attention" list (stale contacts, due steps, unowned tasks, duplicate work). |
-| **Role guide** | Responsibilities, typical week, peak workload and the committee directory (everyone's role, email, and when they joined or left). Editable; flagged stale if not reviewed in 30 days. |
+| **Role guide** | Responsibilities, typical week, peak workload and the role's **outreach contacts** (companies and partners, who owns each one, what to ask them). Contacts not updated in 30 days are marked **Stale**. Editable; the guide is flagged stale if not reviewed in 30 days. |
 | **Onboarding** | Day-1 and week-1 checklist. Each member ticks their own steps; due dates count from when they joined. |
-| **Outreach contacts** | The companies and partners the society works with, who owns each relationship and what to ask them about. Anything not updated in 30 days is marked **Stale**. |
+| **Contacts** | The committee directory: everyone's role, email, and when they joined or left ("Current member" if still on the committee). |
 | **Tasks** | Shared board. Warns when two people own open tasks for the same contact (or with the same title). |
 | **Decision log** | What was decided, why, and what was tried before. Searchable. |
 | **Buddy & check-in** | Named buddy (a member account), week-1 check-in booking and outcome, private notes (visible only to you). Booking or moving the check-in messages the buddy. |

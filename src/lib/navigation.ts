@@ -4,7 +4,7 @@ export type View =
   | 'Dashboard'
   | 'Role guide'
   | 'Onboarding'
-  | 'Outreach contacts'
+  | 'Contacts'
   | 'Tasks'
   | 'Decision log'
   | 'Buddy & check-in'
@@ -14,7 +14,7 @@ export type View =
   | 'Lead view';
 
 export const navGroups: { label: string; items: View[] }[] = [
-  { label: 'Workspace', items: ['Dashboard', 'Role guide', 'Onboarding', 'Outreach contacts', 'Tasks', 'Decision log'] },
+  { label: 'Workspace', items: ['Dashboard', 'Role guide', 'Onboarding', 'Contacts', 'Tasks', 'Decision log'] },
   { label: 'Support', items: ['Buddy & check-in', 'Messages', 'Ask assistant'] },
   { label: 'Manage', items: ['Outgoing handover', 'Lead view'] },
 ];
@@ -23,7 +23,7 @@ const slugs: Record<View, string> = {
   Dashboard: 'dashboard',
   'Role guide': 'role-guide',
   Onboarding: 'onboarding',
-  'Outreach contacts': 'contacts',
+  Contacts: 'contacts',
   Tasks: 'tasks',
   'Decision log': 'decisions',
   'Buddy & check-in': 'buddy',
