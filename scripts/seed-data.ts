@@ -94,9 +94,9 @@ export const roles: RoleSeed[] = [
     ],
     recurring: [],
     steps: [
-      ['Read the Partnerships & Outreach onboarding doc', 'Access', 1, 'https://docs.google.com/document/d/1X2nSCCgecxXKYO68qT2lawRw3OSHdLzqYqZTSCWTtIw/edit?usp=sharing'],
+      ['Read the Partnerships & Outreach onboarding doc', 'Access', 1, 'https://docs.google.com/document/d/1QJWH-SweJjCSpvMZLG3Z93o5VbIjr_K4rYY1WPXNRd0/edit?usp=sharing'],
       ['Join the CBC Discord', 'Access', 1, 'https://discord.gg/rFe8tJ88ww'],
-      ['Open the ServiceNow partnership proposal with your @tcd email', 'Access', 1, 'https://drive.google.com/file/d/1N4ubnkq0UzcwMxzd0bj2CAwne7nlyKX4/view?usp=sharing'],
+      ['Open the ServiceNow partnership proposal with your @tcd email', 'Access', 1, 'https://docs.google.com/document/d/1QJWH-SweJjCSpvMZLG3Z93o5VbIjr_K4rYY1WPXNRd0/edit?usp=sharing'],
       ['Meet your ambassador (your onboarding buddy)', 'Introductions', 3, '#/buddy'],
       ['Go through the role guide', 'Introductions', 3, '#/role-guide'],
       ['Learn who owns each outreach partner', 'Introductions', 4, '#/role-guide'],
