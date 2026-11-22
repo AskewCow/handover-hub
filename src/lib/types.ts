@@ -60,6 +60,19 @@ export interface RecurringTask {
   updated_at: string;
 }
 
+/** Someone on the society committee (society-wide, shown in the Role guide). */
+export interface CommitteeMember {
+  id: string;
+  name: string;
+  committee_role: string;
+  email: string;
+  joined_on: string | null;
+  /** Null while they are still on the committee. */
+  left_on: string | null;
+  position: number;
+  updated_at: string;
+}
+
 export interface OnboardingStep {
   id: string;
   role_id: string;
@@ -130,6 +143,7 @@ export interface RoleBundle {
   responsibilities: Responsibility[];
   weekItems: WeekItem[];
   recurringTasks: RecurringTask[];
+  committee: CommitteeMember[];
   steps: OnboardingStep[];
   completedStepIds: Set<string>;
   contacts: Contact[];

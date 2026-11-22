@@ -8,13 +8,15 @@ let counter = 0;
 /** Temporary id for a row that has not been saved yet. */
 export const newDraftId = () => `new-${++counter}`;
 const isNew = (id: string) => id.startsWith('new-');
+const isDateField = (field: PropertyKey) => String(field).endsWith('_on');
 
 export async function syncList<T extends { id: string; position: number }>(
   table: ContentTable,
-  roleId: string,
   original: T[],
   draft: DraftRow<T>[],
   fields: (keyof T)[],
+  /** Extra values for new rows, e.g. { role_id }. */
+  insertValues: Record<string, unknown> = {},
 ): Promise<void> {
   const kept = draft.filter(row => fields.some(f => String(row[f] ?? '').trim() !== ''));
   const keptIds = new Set(kept.map(r => r.id));
@@ -23,8 +25,11 @@ export async function syncList<T extends { id: string; position: number }>(
   const deletes = original.filter(r => !keptIds.has(r.id)).map(r => deleteRow(table, r.id));
 
   const writes = kept.map((row, position) => {
-    const values = Object.fromEntries(fields.map(f => [f, typeof row[f] === 'string' ? (row[f] as string).trim() : row[f]])) as Partial<T>;
-    if (isNew(row.id)) return insertRow<T>(table, { ...values, position, role_id: roleId } as Partial<T>);
+    // Empty strings become null so optional dates can be cleared.
+    const values = Object.fromEntries(
+      fields.map(f => [f, typeof row[f] === 'string' ? (row[f] as string).trim() || (isDateField(f) ? null : '') : row[f]]),
+    ) as Partial<T>;
+    if (isNew(row.id)) return insertRow<T>(table, { ...values, position, ...insertValues } as Partial<T>);
     const before = byId.get(row.id)!;
     const changed = before.position !== position || fields.some(f => before[f] !== values[f]);
     return changed ? updateRow<T>(table, row.id, { ...values, position } as Partial<T>) : null;

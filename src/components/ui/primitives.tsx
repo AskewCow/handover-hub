@@ -24,7 +24,7 @@ const pillTones: Record<Tone, string> = {
 };
 
 export function Pill({ children, tone = 'neutral' }: { children: ReactNode; tone?: Tone }) {
-  return <span className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset ${pillTones[tone]}`}>{children}</span>;
+  return <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-bold ring-1 ring-inset ${pillTones[tone]}`}>{children}</span>;
 }
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {

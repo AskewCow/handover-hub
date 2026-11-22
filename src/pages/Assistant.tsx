@@ -17,7 +17,7 @@ interface Message {
 const sourceTone: Record<string, Tone> = {
   'Role guide': 'blue',
   Onboarding: 'purple',
-  Contacts: 'green',
+  'Outreach contacts': 'green',
   Tasks: 'amber',
   'Decision log': 'purple',
   'Buddy & check-in': 'green',

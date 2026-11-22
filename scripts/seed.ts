@@ -7,7 +7,7 @@
 //
 // Needs in .env.local: VITE_SUPABASE_URL, SUPABASE_SECRET_KEY, TEST_USER_PASSWORD.
 import { createClient } from '@supabase/supabase-js';
-import { at, dateOnly, daysAgo, daysFromNow, roles, SOCIETY, TERM, testUsers, welcomeMessages } from './seed-data';
+import { at, committee, dateOnly, daysAgo, daysFromNow, roles, SOCIETY, TERM, testUsers, welcomeMessages } from './seed-data';
 
 const fresh = process.argv.includes('--fresh');
 const TEST_DOMAIN = '@handoverhub.test';
@@ -64,7 +64,7 @@ async function seedRoles() {
 
     await check('responsibilities', db.from('responsibilities').insert(list(seed.responsibilities, (body, position) => ({ body, position, updated_at: daysAgo(seed.role.reviewedDaysAgo) }))));
     if (seed.week.length) await check('week_items', db.from('week_items').insert(list(seed.week, ([day, body], position) => ({ day, body, position }))));
-    await check('recurring_tasks', db.from('recurring_tasks').insert(list(seed.recurring, ([name, schedule, tool, duration], position) => ({ name, schedule, tool, duration, position }))));
+    if (seed.recurring.length) await check('recurring_tasks', db.from('recurring_tasks').insert(list(seed.recurring, ([name, schedule, tool, duration], position) => ({ name, schedule, tool, duration, position }))));
     await check('onboarding_steps', db.from('onboarding_steps').insert(list(seed.steps, ([title, phase, due_day, link], position) => ({ title, phase, due_day, position, link: link ?? null }))));
 
     const contacts = await check(
@@ -105,6 +105,17 @@ async function seedRoles() {
 
     console.log(`✓ ${seed.role.title}`);
   }
+}
+
+async function seedCommittee() {
+  await check('clear committee', db.from('committee_members').delete().not('id', 'is', null));
+  await check(
+    'committee',
+    db.from('committee_members').insert(
+      committee.map((m, position) => ({ name: m.name, committee_role: m.role, email: m.email, joined_on: m.joined, left_on: m.left ?? null, position })),
+    ),
+  );
+  console.log(`✓ committee directory (${committee.length} people)`);
 }
 
 async function seedUsers(): Promise<Map<string, string>> {
@@ -185,6 +196,7 @@ async function seedMessages(ids: Map<string, string>) {
 try {
   console.log('Seeding demo roles…');
   await seedRoles();
+  await seedCommittee();
   console.log('Creating test accounts…');
   const ids = await seedUsers();
   await linkBuddies(ids);

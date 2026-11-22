@@ -3,6 +3,7 @@ import { supabase } from './supabase';
 import type {
   AskAnswer,
   Checkin,
+  CommitteeMember,
   Contact,
   Decision,
   HandoverSection,
@@ -26,7 +27,8 @@ export type ContentTable =
   | 'onboarding_steps'
   | 'contacts'
   | 'tasks'
-  | 'decisions';
+  | 'decisions'
+  | 'committee_members';
 
 function unwrap<T>({ data, error }: { data: T | null; error: { message: string } | null }): T {
   if (error) throw new Error(error.message);
@@ -59,7 +61,7 @@ export async function loadRoleBundle(roleId: string, viewer: Profile): Promise<R
   const byRole = <T,>(table: string, order: string, ascending = true) =>
     supabase.from(table).select('*').eq('role_id', roleId).order(order, { ascending }).then(r => unwrap(r) as T[]);
 
-  const [role, responsibilities, weekItems, recurringTasks, steps, contacts, tasks, decisions, handover, checkins, incoming] =
+  const [role, responsibilities, weekItems, recurringTasks, steps, contacts, tasks, decisions, handover, checkins, incoming, committee] =
     await Promise.all([
       supabase.from('roles').select('*').eq('id', roleId).single().then(r => unwrap(r) as Role),
       byRole<Responsibility>('responsibilities', 'position'),
@@ -79,6 +81,7 @@ export async function loadRoleBundle(roleId: string, viewer: Profile): Promise<R
         .order('created_at')
         .limit(1)
         .then(r => (unwrap(r) as Profile[])[0] ?? null),
+      supabase.from('committee_members').select('*').order('position').then(r => unwrap(r) as CommitteeMember[]),
     ]);
 
   const stepIds = steps.map(s => s.id);
@@ -93,6 +96,7 @@ export async function loadRoleBundle(roleId: string, viewer: Profile): Promise<R
     responsibilities,
     weekItems,
     recurringTasks,
+    committee,
     steps,
     completedStepIds: new Set(completed.map(c => c.step_id)),
     contacts,

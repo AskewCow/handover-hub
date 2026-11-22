@@ -7,9 +7,9 @@ For each committee role it brings together:
 | Page | What it does |
 |---|---|
 | **Dashboard** | Handover completeness, onboarding progress and a "needs attention" list (stale contacts, due steps, unowned tasks, duplicate work). |
-| **Role guide** | Responsibilities, typical week, peak workload and recurring tasks. Editable; flagged stale if not reviewed in 30 days. |
+| **Role guide** | Responsibilities, typical week, peak workload and the committee directory (everyone's role, email, and when they joined or left). Editable; flagged stale if not reviewed in 30 days. |
 | **Onboarding** | Day-1 and week-1 checklist. Each member ticks their own steps; due dates count from when they joined. |
-| **Contacts** | Who owns each relationship and who to ask about what. Anything not updated in 30 days is marked **Stale**. |
+| **Outreach contacts** | The companies and partners the society works with, who owns each relationship and what to ask them about. Anything not updated in 30 days is marked **Stale**. |
 | **Tasks** | Shared board. Warns when two people own open tasks for the same contact (or with the same title). |
 | **Decision log** | What was decided, why, and what was tried before. Searchable. |
 | **Buddy & check-in** | Named buddy (a member account), week-1 check-in booking and outcome, private notes (visible only to you). Booking or moving the check-in messages the buddy. |
@@ -55,7 +55,7 @@ src/
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. **SQL Editor** → paste all of `supabase/schema.sql` → **Run**.
-   - Already ran an older `schema.sql`? Run the files in `supabase/migrations/` in order instead (002 adds messages, 003 makes week-1 check-ins per member).
+   - Already ran an older `schema.sql`? Run the files in `supabase/migrations/` in order instead (002 adds messages, 003 makes week-1 check-ins per member, 004 adds onboarding step links, 005 adds the committee directory).
 3. **Authentication → Sign In / Providers → Email**: turn **off** "Confirm email" (test accounts use addresses that can't receive mail).
 4. **Project Settings → API Keys**: copy the project URL, the **publishable** key and the **secret** key.
 

@@ -29,7 +29,7 @@ export function staleCount(bundle: RoleBundle): number {
 
 /**
  * Handover completeness (0–100). Each check is worth one point:
- * role guide, typical week, recurring tasks, onboarding checklist, contacts, decision log,
+ * role guide, typical week, committee directory, onboarding checklist, contacts, decision log,
  * named buddy, check-in booked and contact freshness; the five outgoing-handover sections are
  * worth three points between them.
  */
@@ -37,7 +37,7 @@ export function completeness(bundle: RoleBundle): number {
   const checks = [
     bundle.responsibilities.length > 0,
     bundle.weekItems.length > 0,
-    bundle.recurringTasks.length > 0,
+    bundle.committee.length > 0,
     bundle.steps.length > 0,
     bundle.contacts.length > 0,
     bundle.decisions.length > 0,
@@ -55,7 +55,7 @@ export function knowledgeItems(bundle: RoleBundle): number {
   return (
     bundle.responsibilities.length +
     bundle.weekItems.length +
-    bundle.recurringTasks.length +
+    bundle.committee.length +
     bundle.contacts.length +
     bundle.decisions.length +
     HANDOVER_SECTIONS.filter(s => isSectionFilled(bundle, s.key)).length
@@ -68,7 +68,7 @@ export function lastUpdated(bundle: RoleBundle): string {
     bundle.role.updated_at,
     ...bundle.responsibilities.map(x => x.updated_at),
     ...bundle.weekItems.map(x => x.updated_at),
-    ...bundle.recurringTasks.map(x => x.updated_at),
+    ...bundle.committee.map(x => x.updated_at),
     ...bundle.contacts.map(x => x.updated_at),
     ...bundle.tasks.map(x => x.updated_at),
     ...bundle.decisions.map(x => x.created_at),
@@ -118,7 +118,7 @@ export function findOverlap(
 // "Needs attention" panel
 // ---------------------------------------------------------------------------
 
-export type AttentionTarget = 'Contacts' | 'Onboarding' | 'Tasks' | 'Role guide' | 'Buddy & check-in';
+export type AttentionTarget = 'Outreach contacts' | 'Onboarding' | 'Tasks' | 'Role guide' | 'Buddy & check-in';
 
 export interface AttentionItem {
   key: string;
@@ -137,7 +137,7 @@ export function attentionItems(bundle: RoleBundle, joinedAt: string, now = new D
       key: `stale-${c.id}`,
       title: 'Contact may be out of date',
       detail: `${c.name} · last checked ${daysSince(c.updated_at, now)} days ago`,
-      target: 'Contacts',
+      target: 'Outreach contacts',
       badge: 'Stale',
       tone: 'red',
     });

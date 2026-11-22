@@ -24,9 +24,9 @@ export function Contacts() {
   return (
     <>
       <PageTitle
-        eyebrow="People & partners"
-        title="Contacts"
-        description="Know who owns each relationship and who to ask when you need help."
+        eyebrow="Partners & leads"
+        title="Outreach contacts"
+        description="The companies and partners CBC works with, who owns each relationship, and what to ask them about."
         action={<Button onClick={() => setEditing('new')}>+ Add contact</Button>}
       />
       <div className="flex flex-col gap-x-4 sm:flex-row sm:items-start sm:justify-between">

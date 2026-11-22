@@ -45,6 +45,22 @@ export interface RoleSeed {
 }
 
 export const SOCIETY = 'Claude Builder Club';
+
+/**
+ * Committee directory shown in the Role guide. Names other than the ambassadors are made up, and the
+ * emails use the reserved .example domain, so none of them reach a real person.
+ */
+export const committee: { name: string; role: string; email: string; joined: string; left?: string }[] = [
+  { name: 'Adam B.', role: 'Ambassador', email: 'adam.b@cbc.example', joined: '2025-09-15' },
+  { name: 'Pavlo K.', role: 'Ambassador', email: 'pavlo.k@cbc.example', joined: '2025-09-15' },
+  { name: 'Roman M.', role: 'Partnerships & Outreach Lead', email: 'roman.m@cbc.example', joined: '2026-11-22' },
+  { name: 'Brian W.', role: 'Outreach', email: 'brian.w@cbc.example', joined: '2026-01-20' },
+  { name: 'Niamh C.', role: 'Workshop Coordinator', email: 'niamh.c@cbc.example', joined: '2026-09-22' },
+  { name: 'Ciara D.', role: 'Social Media', email: 'ciara.d@cbc.example', joined: '2025-10-06' },
+  { name: 'Ethan L.', role: 'Backend Developer', email: 'ethan.l@cbc.example', joined: '2026-02-09' },
+  { name: 'Maya R.', role: 'Frontend Developer', email: 'maya.r@cbc.example', joined: '2026-09-22' },
+  { name: 'Sophie K.', role: 'Outreach', email: 'sophie.k@cbc.example', joined: '2025-10-06', left: '2026-06-12' },
+];
 export const TERM = '2026/27';
 
 const AMBASSADOR = 'CBC Ambassador';
@@ -71,14 +87,12 @@ export const roles: RoleSeed[] = [
       'Get an ambassador’s okay before agreeing money or deliverables on the club’s behalf',
       'Find a drinks partner for events (Red Bull or an alternative)',
     ],
-    week: [],
-    recurring: [
-      ['Check #committee for the firm', 'Before every outreach', 'Discord #committee', '2 min'],
-      ['Get an ambassador’s okay', 'Before every outreach', 'Discord #committee', ''],
-      ['Book the Innovation Hub', 'At least 3 weeks before each event', 'Email the Hub contact (ask Adam B.)', ''],
-      ['Order food from Bobo’s', 'Before each large event', 'Dame Street branch (ask Brian W.)', ''],
-      ['Say when you drop a firm', 'Whenever you stop pursuing one', 'Discord #committee', '2 min'],
+    week: [
+      ['Mon', 'Check #committee for new leads, replies and anything waiting on an ambassador’s okay'],
+      ['Wed', 'Follow up with the partners you own and log any updates in the app'],
+      ['Fri', 'Post a short outreach update in #committee and plan next week’s contacts'],
     ],
+    recurring: [],
     steps: [
       ['Read the Partnerships & Outreach onboarding doc', 'Access', 1, 'https://docs.google.com/document/d/1X2nSCCgecxXKYO68qT2lawRw3OSHdLzqYqZTSCWTtIw/edit?usp=sharing'],
       ['Join the CBC Discord and the #committee channel', 'Access', 1, 'https://discord.gg/rFe8tJ88ww'],
@@ -86,9 +100,8 @@ export const roles: RoleSeed[] = [
       ['Meet your ambassador (your onboarding buddy)', 'Introductions', 3, '#/buddy'],
       ['Go through the role guide', 'Introductions', 3, '#/role-guide'],
       ['Learn who owns each current partner', 'Introductions', 4, '#/contacts'],
-      ['Claim a first lead in #committee', 'First tasks', 5],
-      ['Draft your first outreach message', 'First tasks', 6],
-      ['Book your week-1 check-in with your ambassador', 'First tasks', 7],
+      ['Look through the decision log', 'First tasks', 5, '#/decisions'],
+      ['Book your week-1 check-in with your ambassador', 'First tasks', 7, '#/buddy'],
     ],
     contacts: [
       ['ServiceNow', 'Adam B.', 'Sponsor, €3,000: hackathon promotion on our socials and Discord, Trinity talent pool, on-campus workshops. Our only written proposal', 12],

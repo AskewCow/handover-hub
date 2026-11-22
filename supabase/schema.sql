@@ -6,7 +6,7 @@
 -- Reset (app objects only; auth.users is left untouched)
 -- ---------------------------------------------------------------------------
 drop trigger if exists on_auth_user_created on auth.users;
-drop table if exists public.messages, public.assistant_questions, public.handover_sections, public.checkin_notes,
+drop table if exists public.committee_members, public.messages, public.assistant_questions, public.handover_sections, public.checkin_notes,
   public.checkins, public.decisions, public.tasks, public.contacts, public.onboarding_completions,
   public.onboarding_steps, public.recurring_tasks, public.week_items, public.responsibilities,
   public.profiles, public.roles cascade;
@@ -352,3 +352,29 @@ create policy "send as yourself" on public.messages for insert to authenticated
 -- Recipients can only change read_at (see the column grant above).
 create policy "mark received messages read" on public.messages for update to authenticated
   using (recipient_id = auth.uid()) with check (recipient_id = auth.uid());
+
+-- ---------------------------------------------------------------------------
+-- Committee directory (same as migrations/005_committee_directory.sql)
+-- ---------------------------------------------------------------------------
+create table if not exists public.committee_members (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  committee_role text not null default '',
+  email text not null default '',
+  joined_on date,
+  left_on date, -- null while they are still on the committee
+  position int not null default 0,
+  updated_at timestamptz not null default now()
+);
+
+drop trigger if exists set_updated_at on public.committee_members;
+create trigger set_updated_at before update on public.committee_members
+  for each row execute function public.set_updated_at();
+
+alter table public.committee_members enable row level security;
+grant select, insert, update, delete on public.committee_members to authenticated;
+grant all on public.committee_members to service_role;
+
+drop policy if exists "members manage committee_members" on public.committee_members;
+create policy "members manage committee_members" on public.committee_members for all to authenticated
+  using (true) with check (true);

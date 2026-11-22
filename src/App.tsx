@@ -23,7 +23,7 @@ const pages: Record<View, ComponentType> = {
   Dashboard,
   'Role guide': RoleGuide,
   Onboarding,
-  Contacts,
+  'Outreach contacts': Contacts,
   Tasks,
   'Decision log': DecisionLog,
   'Buddy & check-in': Buddy,
