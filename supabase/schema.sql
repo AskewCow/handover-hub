@@ -104,7 +104,8 @@ create table public.onboarding_steps (
   title text not null,
   phase public.onboarding_phase not null,
   due_day int not null default 1, -- days after the member joined
-  position int not null default 0
+  position int not null default 0,
+  link text -- optional: an app page such as '#/buddy', or an external https:// URL
 );
 
 -- Each member ticks their own checklist.

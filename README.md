@@ -89,7 +89,7 @@ This sets up the Claude Builder Club **Partnerships & Outreach Lead** role from 
 | Email | Who | Use it to |
 |---|---|---|
 | `ambassador@handoverhub.test` | CBC Ambassador: onboarding buddy and society lead | Reply to new members' messages, see the Lead view |
-| `alex.incoming@handoverhub.test` | Alex Morgan, halfway through onboarding | See progress, a booked check-in and a claimed lead (Red Bull) |
+| `roman.incoming@handoverhub.test` | Roman M., incoming Partnerships & Outreach Lead | The user test: starts from scratch, Red Bull is unclaimed |
 | `tester@handoverhub.test` | Test Participant, brand new | Usability testing from a clean start |
 | `tester2@handoverhub.test` | Second Participant, brand new | A second test session |
 

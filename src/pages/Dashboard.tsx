@@ -14,6 +14,8 @@ export function Dashboard() {
   const attention = attentionItems(bundle, profile.created_at);
   const phases = PHASES.map(phase => ({ phase, ...onboardingProgress(bundle, phase) }));
   const currentPhase = phases.findIndex(p => p.done < p.total);
+  const notStarted = onboarding.total > 0 && onboarding.done === 0;
+  const finished = onboarding.total > 0 && onboarding.done === onboarding.total;
 
   return (
     <>
@@ -21,7 +23,12 @@ export function Dashboard() {
         eyebrow={`${role.term} committee transition`}
         title={`${greeting()}, ${firstName(profile.full_name)}`}
         description="Here’s what needs your attention to feel confident in your new role."
-        action={<Button onClick={() => go('Onboarding')}>Continue onboarding <span>→</span></Button>}
+        action={
+          <Button onClick={() => go('Onboarding')} className={notStarted ? 'attention-pulse' : ''}>
+            {notStarted ? 'Start onboarding' : finished ? 'Review onboarding' : 'Continue onboarding'}{' '}
+            <span className={notStarted ? 'attention-nudge' : ''}>→</span>
+          </Button>
+        }
       />
       <div className="grid gap-4 lg:grid-cols-[1.4fr_.9fr]">
         <Card className="relative overflow-hidden p-5 sm:p-6">

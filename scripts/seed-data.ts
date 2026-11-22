@@ -36,7 +36,8 @@ export interface RoleSeed {
   responsibilities: string[];
   week: [day: string, body: string][];
   recurring: [name: string, schedule: string, tool: string, duration: string][];
-  steps: [title: string, phase: Phase, dueDay: number][];
+  /** link: an app page such as '#/buddy', or an external https:// URL (opens in a new tab). */
+  steps: [title: string, phase: Phase, dueDay: number, link?: string][];
   contacts: [name: string, owner: string, askAbout: string, updatedDaysAgo: number][];
   tasks: { title: string; status: Status; assignee: string | null; dueInDays: number | null; contact?: string; updatedDaysAgo?: number }[];
   decisions: [daysAgo: number, title: string, reason: string, triedBefore: string, author: string][];
@@ -79,27 +80,26 @@ export const roles: RoleSeed[] = [
       ['Say when you drop a firm', 'Whenever you stop pursuing one', 'Discord #committee', '2 min'],
     ],
     steps: [
-      ['Read the Partnerships & Outreach onboarding doc', 'Access', 1],
-      ['Join the CBC Discord and the #committee channel', 'Access', 1],
-      ['Open the ServiceNow partnership proposal with your @tcd email', 'Access', 1],
-      ['Meet your ambassador (your onboarding buddy)', 'Introductions', 3],
-      ['Introduce yourself in #committee', 'Introductions', 3],
-      ['Learn who owns each current partner', 'Introductions', 4],
+      ['Read the Partnerships & Outreach onboarding doc', 'Access', 1, 'https://docs.google.com/document/d/1X2nSCCgecxXKYO68qT2lawRw3OSHdLzqYqZTSCWTtIw/edit?usp=sharing'],
+      ['Join the CBC Discord and the #committee channel', 'Access', 1, 'https://discord.gg/rFe8tJ88ww'],
+      ['Open the ServiceNow partnership proposal with your @tcd email', 'Access', 1, 'https://drive.google.com/file/d/1N4ubnkq0UzcwMxzd0bj2CAwne7nlyKX4/view?usp=sharing'],
+      ['Meet your ambassador (your onboarding buddy)', 'Introductions', 3, '#/buddy'],
+      ['Go through the role guide', 'Introductions', 3, '#/role-guide'],
+      ['Learn who owns each current partner', 'Introductions', 4, '#/contacts'],
       ['Claim a first lead in #committee', 'First tasks', 5],
       ['Draft your first outreach message', 'First tasks', 6],
       ['Book your week-1 check-in with your ambassador', 'First tasks', 7],
     ],
     contacts: [
-      ['ServiceNow', 'Adam B. (ambassador)', 'Sponsor, €3,000: hackathon promotion on our socials and Discord, Trinity talent pool, on-campus workshops. Our only written proposal', 12],
+      ['ServiceNow', 'Adam B.', 'Sponsor, €3,000: hackathon promotion on our socials and Discord, Trinity talent pool, on-campus workshops. Our only written proposal', 12],
       ['Superteam (Solana)', 'Pavlo K.', 'Hackathon partner: fully funded hackathons (food, venue, judges). Discussing monetary funding; they want winners to build on in Colosseum', 6],
       ['Bobo’s Burgers (Dame Street)', 'Brian W.', 'Food for large events, about €7 a head for burger and fries. Used at two hackathons; they want large orders and Google reviews', DOC_AGE_DAYS],
-      ['Innovation Hub (formerly Portal)', 'Adam B. (ambassador)', 'Free event space for 100, 1st floor of the Business building. Needs at least 3 weeks’ notice', 20],
-      ['Red Bull', 'Alex M. (claimed)', 'Drinks partner lead. The old campus rep gave free crates for good event photos; the new rep hasn’t replied yet', 4],
-      ['#committee (Discord)', 'Whole committee', 'Check here before contacting any firm, then ping an ambassador for the okay', 2],
+      ['Innovation Hub (formerly Portal)', 'Adam B.', 'Free event space for 100, 1st floor of the Business building. Needs at least 3 weeks’ notice', 20],
+      ['Red Bull', 'Unclaimed', 'Open drinks partner lead. The old campus rep gave free crates for good event photos; we haven’t reached the new rep yet', 4],
       [AMBASSADOR, 'Ambassador', 'Okays new outreach and any money or deliverables for the club', 2],
     ],
     tasks: [
-      { title: 'Contact Red Bull’s new campus rep', status: 'in_progress', assignee: 'Alex Morgan', dueInDays: 3, contact: 'Red Bull' },
+      { title: 'Contact Red Bull’s new campus rep', status: 'todo', assignee: null, dueInDays: 7, contact: 'Red Bull' },
       { title: 'Follow up on Superteam monetary funding', status: 'in_progress', assignee: 'Pavlo K.', dueInDays: 5, contact: 'Superteam (Solana)' },
       { title: 'Plan a ServiceNow workshop on campus', status: 'todo', assignee: 'Adam B.', dueInDays: 14, contact: 'ServiceNow' },
       { title: 'Confirm Bobo’s order for the next hackathon', status: 'todo', assignee: 'Brian W.', dueInDays: 10, contact: 'Bobo’s Burgers (Dame Street)' },
@@ -152,33 +152,13 @@ export interface TestUser {
 export const testUsers: TestUser[] = [
   // The onboarding buddy and society lead. Sign in as this account to reply to messages during a test.
   { email: 'ambassador@handoverhub.test', fullName: AMBASSADOR, memberType: 'lead', roleId: 'partnerships', joinedDaysAgo: 400 },
-  // Halfway through onboarding: has claimed the Red Bull lead and booked a check-in.
-  {
-    email: 'alex.incoming@handoverhub.test',
-    fullName: 'Alex Morgan',
-    memberType: 'incoming',
-    roleId: 'partnerships',
-    joinedDaysAgo: 4,
-    completedSteps: [
-      'Read the Partnerships & Outreach onboarding doc',
-      'Join the CBC Discord and the #committee channel',
-      'Open the ServiceNow partnership proposal with your @tcd email',
-      'Meet your ambassador (your onboarding buddy)',
-      'Introduce yourself in #committee',
-    ],
-    checkin: { status: 'scheduled', inDays: 2, hour: 14 },
-  },
+  // The incoming Partnerships & Outreach Lead for the user test: starts from scratch.
+  { email: 'roman.incoming@handoverhub.test', fullName: 'Roman M.', memberType: 'incoming', roleId: 'partnerships', joinedDaysAgo: 0 },
   // Brand-new accounts for usability tests: nothing ticked, no check-in, no messages.
   { email: 'tester@handoverhub.test', fullName: 'Test Participant', memberType: 'incoming', roleId: 'partnerships', joinedDaysAgo: 0 },
   { email: 'tester2@handoverhub.test', fullName: 'Second Participant', memberType: 'incoming', roleId: 'partnerships', joinedDaysAgo: 0 },
 ];
 
 /** Messages already in the demo inbox. Re-seeding replaces only these, unless run with --fresh. */
-export const welcomeMessages: { from: string; to: string; body: string; hoursAgo: number }[] = [
-  {
-    from: 'ambassador@handoverhub.test',
-    to: 'alex.incoming@handoverhub.test',
-    body: 'Welcome to Partnerships & Outreach, Alex! I’m your ambassador for onboarding. Read the role guide first, and before you contact any company, check #committee and get my okay. Message me here with any questions.',
-    hoursAgo: 90,
-  },
-];
+/** Messages already in the demo inbox. Re-seeding replaces only these, unless run with --fresh. */
+export const welcomeMessages: { from: string; to: string; body: string; hoursAgo: number }[] = [];

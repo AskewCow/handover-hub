@@ -67,6 +67,8 @@ export interface OnboardingStep {
   phase: OnboardingPhase;
   due_day: number;
   position: number;
+  /** An app page such as "#/buddy", or an external https:// URL. */
+  link: string | null;
 }
 
 export interface Contact {

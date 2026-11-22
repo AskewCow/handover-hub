@@ -65,7 +65,7 @@ async function seedRoles() {
     await check('responsibilities', db.from('responsibilities').insert(list(seed.responsibilities, (body, position) => ({ body, position, updated_at: daysAgo(seed.role.reviewedDaysAgo) }))));
     if (seed.week.length) await check('week_items', db.from('week_items').insert(list(seed.week, ([day, body], position) => ({ day, body, position }))));
     await check('recurring_tasks', db.from('recurring_tasks').insert(list(seed.recurring, ([name, schedule, tool, duration], position) => ({ name, schedule, tool, duration, position }))));
-    await check('onboarding_steps', db.from('onboarding_steps').insert(list(seed.steps, ([title, phase, due_day], position) => ({ title, phase, due_day, position }))));
+    await check('onboarding_steps', db.from('onboarding_steps').insert(list(seed.steps, ([title, phase, due_day, link], position) => ({ title, phase, due_day, position, link: link ?? null }))));
 
     const contacts = await check(
       'contacts',

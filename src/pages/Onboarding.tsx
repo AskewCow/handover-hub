@@ -79,6 +79,7 @@ export function Onboarding() {
                             {!isDone && <span className={`mt-0.5 block text-[11px] ${due === 'overdue' ? 'text-rose-500' : 'text-slate-400'}`}>{due}</span>}
                           </span>
                         </label>
+                        {s.link && <StepLink link={s.link} title={s.title} />}
                         {editing && (
                           <button onClick={() => run(() => deleteRow('onboarding_steps', s.id), 'Step removed')} className="mt-2.5 px-2 text-lg text-slate-300 hover:text-rose-500" aria-label={`Remove ${s.title}`}>×</button>
                         )}
@@ -115,5 +116,21 @@ function AddStep({ phase, position }: { phase: OnboardingPhase; position: number
       <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Add a step…" aria-label={`New ${phase} step`} className="min-w-0 flex-1 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-500" />
       <button className="rounded-lg bg-slate-950 px-3 text-sm font-bold text-white">Add</button>
     </form>
+  );
+}
+
+/** "Open ↗" for an external page (new tab) or "Go →" for a page inside the app. Sits outside the label so it never ticks the step. */
+function StepLink({ link, title }: { link: string; title: string }) {
+  const external = /^https?:\/\//.test(link);
+  return (
+    <a
+      href={link}
+      target={external ? '_blank' : undefined}
+      rel={external ? 'noopener noreferrer' : undefined}
+      aria-label={`${external ? 'Open' : 'Go to'} the page for “${title}”`}
+      className="mt-3 shrink-0 rounded-lg px-2 py-0.5 text-xs font-bold text-emerald-700 transition hover:bg-emerald-50"
+    >
+      {external ? 'Open ↗' : 'Go →'}
+    </a>
   );
 }
